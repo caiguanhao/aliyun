@@ -19,14 +19,14 @@ function str_to_array {
 }
 
 function update_access_key {
-  str_to_array DOMAIN
+  str_to_array API_PREFIX
   str_to_array BUCKET
   str_to_array REMOTE_ROOT
   str_to_array ALIYUN_ACCESS_KEY
   str_to_array ALIYUN_ACCESS_SECRET
   awk "
-  /DEFAULT_DOMAIN/ {
-    print \"var DEFAULT_DOMAIN = []byte{${DOMAIN}}\"
+  /DEFAULT_API_PREFIX/ {
+    print \"var DEFAULT_API_PREFIX = []byte{${API_PREFIX}}\"
     next
   }
   /DEFAULT_BUCKET/ {
@@ -53,11 +53,12 @@ function update_access_key {
   mv _access.go access.go
 }
 
-if test -z "$DOMAIN"; then
-  echo -n "Please enter default API domain: (oss-cn-hangzhou.aliyuncs.com if empty) "
-  read DOMAIN
-  if test -z "$DOMAIN"; then
-    DOMAIN=oss-cn-hangzhou.aliyuncs.com
+_DEFAULT_API_PREFIX='https://%s.oss-cn-hangzhou.aliyuncs.com'
+if test -z "$API_PREFIX"; then
+  echo -n "Please enter default API domain: ($_DEFAULT_API_PREFIX if empty) "
+  read API_PREFIX
+  if test -z "$API_PREFIX"; then
+    API_PREFIX=$_DEFAULT_API_PREFIX
   fi
 fi
 while test -z "$BUCKET"; do
@@ -87,7 +88,7 @@ else
   go build
 fi
 
-DOMAIN="oss-cn-hangzhou.aliyuncs.com"
+API_PREFIX=$_DEFAULT_API_PREFIX
 BUCKET="bucket"
 REMOTE_ROOT="oss"
 ALIYUN_ACCESS_KEY="key"

@@ -3,7 +3,7 @@ app:
   command: ["go", "build"]
   working_dir: '/go/src/github.com/caiguanhao/oss'
   environment:
-    - DOMAIN
+    - API_PREFIX
     - BUCKET
     - REMOTE_ROOT
     - ALIYUN_ACCESS_KEY

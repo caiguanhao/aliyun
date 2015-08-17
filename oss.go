@@ -201,14 +201,18 @@ func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) 
 var api string
 var bucket string
 var remoteRoot string
-var domain string
+var apiPrefix string
 var concurrency int
 
 var dryrun bool
 var verbose bool
 
 func makeAPI() string {
-	api = fmt.Sprintf("https://%s.%s", bucket, domain)
+	if strings.Count(apiPrefix, "%s") == 1 {
+		api = fmt.Sprintf(apiPrefix, bucket)
+	} else {
+		api = apiPrefix
+	}
 	return api
 }
 
@@ -216,7 +220,7 @@ func init() {
 	flag.BoolVar(&dryrun, "d", false, "")
 	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
 	flag.StringVar(&remoteRoot, "p", string(DEFAULT_ROOT), "")
-	flag.StringVar(&domain, "z", string(DEFAULT_DOMAIN), "")
+	flag.StringVar(&apiPrefix, "z", string(DEFAULT_API_PREFIX), "")
 	flag.IntVar(&concurrency, "c", 2, "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
@@ -225,11 +229,14 @@ func init() {
 		fmt.Println("If no file is specified, current directory is used.")
 		fmt.Println()
 		fmt.Println("Options:")
-		fmt.Println("    -b <name>    Specify bucket other than:", string(DEFAULT_BUCKET))
-		fmt.Println("    -p <path>    Specify remote root directory other than:", string(DEFAULT_ROOT))
-		fmt.Println("    -z <domain>  Specify API domain other than:", string(DEFAULT_DOMAIN))
-		fmt.Println("                 oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
 		fmt.Println("    -c <num>     Specify how many files to process concurrently, default is 2, max is 10")
+		fmt.Println()
+		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
+		fmt.Println("    -p <path>  Specify remote root directory other than:", string(DEFAULT_ROOT))
+		fmt.Println("    -z <url>   Specify API URL prefix other than:", string(DEFAULT_API_PREFIX))
+		fmt.Println("       You can use custom domain or official URL like this:")
+		fmt.Println("       {http, https}://%s.oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
+		fmt.Println("       Note: %s will be replaced with the bucket name if specified")
 		fmt.Println()
 		fmt.Println("    -v  Be verbosive")
 		fmt.Println("    -d  Dry-run. See list of files that will be transferred,")
