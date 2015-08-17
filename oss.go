@@ -52,9 +52,7 @@ func md5hash(file []byte) []byte {
 }
 
 func request(method, remotePath string, localFile []byte, localFileMD5 []byte) (*httpResponse, error) {
-	url := fmt.Sprintf("https://%s.oss-cn-hangzhou.aliyuncs.com%s", bucket, remotePath)
-
-	req, reqErr := http.NewRequest(method, url, bytes.NewReader(localFile))
+	req, reqErr := http.NewRequest(method, api+remotePath, bytes.NewReader(localFile))
 	if reqErr != nil {
 		return nil, reqErr
 	}
@@ -99,6 +97,15 @@ func getHeader(remotePath, headerName string) (*string, error) {
 }
 
 func upload(remotePath, localPath string, checkETag bool) (*string, error) {
+	if dryrun {
+		if verbose {
+			fmt.Println(localPath, "->", api+remotePath)
+		} else {
+			fmt.Println(localPath, "->", remotePath)
+		}
+		return nil, nil
+	}
+
 	if verbose {
 		fmt.Println(remotePath, "- added")
 	}
@@ -191,14 +198,21 @@ func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) 
 	return paths, errc
 }
 
-var verbose bool
+var api string
 var bucket string
 var remoteRoot string
 
+var dryrun bool
+var verbose bool
+
 func init() {
+	flag.BoolVar(&dryrun, "d", false, "")
 	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
 	flag.StringVar(&remoteRoot, "p", string(DEFAULT_ROOT), "")
 	flag.BoolVar(&verbose, "v", false, "")
+
+	api = fmt.Sprintf("https://%s.oss-cn-hangzhou.aliyuncs.com", bucket)
+
 	flag.Usage = func() {
 		fmt.Println("oss [OPTION] [FILE]")
 		fmt.Println()
@@ -207,11 +221,16 @@ func init() {
 		fmt.Println("Options:")
 		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
 		fmt.Println("    -p <path>  Specify remote root directory other than:", string(DEFAULT_ROOT))
+		fmt.Println()
 		fmt.Println("    -v         Be verbosive")
+		fmt.Println("    -d         Dry-run. See list of files that will be transferred,")
+		fmt.Println("               show full URL if -v is also set")
 		fmt.Println()
 		fmt.Println("Built with key ID:", string(KEY))
+		fmt.Println("API:", api)
 		fmt.Println("Source: https://github.com/caiguanhao/oss")
 	}
+
 	flag.Parse()
 
 	remoteRoot = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(remoteRoot, "/")
