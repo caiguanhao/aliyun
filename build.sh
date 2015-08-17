@@ -19,9 +19,14 @@ function str_to_array {
 }
 
 function update_access_key {
+  str_to_array BUCKET
   str_to_array ALIYUN_ACCESS_KEY
   str_to_array ALIYUN_ACCESS_SECRET
   awk "
+  /DEFAULT_BUCKET/ {
+    print \"var DEFAULT_BUCKET = []byte{${BUCKET}}\"
+    next
+  }
   /KEY/ {
     print \"var KEY = []byte{${ALIYUN_ACCESS_KEY}}\"
     next
@@ -38,6 +43,10 @@ function update_access_key {
   mv _access.go access.go
 }
 
+if test -z "$BUCKET"; then
+  echo -n "Please enter default bucket name: "
+  read BUCKET
+fi
 if test -z "$ALIYUN_ACCESS_KEY"; then
   echo -n "Please paste your access key ID: (will not be echoed) "
   read -s ALIYUN_ACCESS_KEY
@@ -52,6 +61,7 @@ update_access_key
 
 go build
 
+BUCKET="bucket"
 ALIYUN_ACCESS_KEY="key"
 ALIYUN_ACCESS_SECRET="secret"
 update_access_key

@@ -50,7 +50,7 @@ func md5hash(file []byte) []byte {
 	return md5sum.Sum(nil)
 }
 
-func request(method, bucket, remotePath string, localFile []byte, localFileMD5 []byte) (*httpResponse, error) {
+func request(method, remotePath string, localFile []byte, localFileMD5 []byte) (*httpResponse, error) {
 	url := fmt.Sprintf("https://%s.oss-cn-hangzhou.aliyuncs.com%s", bucket, remotePath)
 
 	req, reqErr := http.NewRequest(method, url, bytes.NewReader(localFile))
@@ -87,8 +87,8 @@ func request(method, bucket, remotePath string, localFile []byte, localFileMD5 [
 	return &response, nil
 }
 
-func getHeader(bucket, remotePath, headerName string) (*string, error) {
-	resp, reqErr := request("HEAD", bucket, remotePath, nil, nil)
+func getHeader(remotePath, headerName string) (*string, error) {
+	resp, reqErr := request("HEAD", remotePath, nil, nil)
 	if reqErr != nil {
 		return nil, reqErr
 	}
@@ -97,7 +97,7 @@ func getHeader(bucket, remotePath, headerName string) (*string, error) {
 	return &value, nil
 }
 
-func upload(bucket, remotePath, localPath string, checkETag bool) (*string, error) {
+func upload(remotePath, localPath string, checkETag bool) (*string, error) {
 	if verbose {
 		fmt.Println(remotePath, "- added")
 	}
@@ -118,7 +118,7 @@ func upload(bucket, remotePath, localPath string, checkETag bool) (*string, erro
 			wg.Done()
 		}()
 		go func() {
-			etag, headErr := getHeader(bucket, remotePath, "Etag")
+			etag, headErr := getHeader(remotePath, "Etag")
 			if headErr == nil {
 				remoteMD5 = strings.ToLower(strings.Replace(*etag, "\"", "", -1))
 			}
@@ -132,7 +132,7 @@ func upload(bucket, remotePath, localPath string, checkETag bool) (*string, erro
 	}
 
 	fmt.Println(remotePath, "- uploading")
-	resp, reqErr := request("PUT", bucket, remotePath, localFile, localFileMD5)
+	resp, reqErr := request("PUT", remotePath, localFile, localFileMD5)
 	if reqErr != nil {
 		return nil, reqErr
 	}
@@ -140,6 +140,10 @@ func upload(bucket, remotePath, localPath string, checkETag bool) (*string, erro
 	response, respErr := resp.GetResponse()
 	if respErr != nil {
 		return nil, respErr
+	}
+	if resp.StatusCode != 200 {
+		fmt.Println(remotePath, "- fail -", resp.Status)
+		return response, nil
 	}
 	fmt.Println(remotePath, "- done")
 
@@ -154,7 +158,7 @@ type result struct {
 
 func process(done <-chan struct{}, paths <-chan string, c chan<- result) {
 	for path := range paths {
-		ret, err := upload("youyanchu", "/log/"+path, path, true)
+		ret, err := upload("/log/"+path, path, true)
 		select {
 		case c <- result{&path, ret, err}:
 		case <-done:
@@ -187,8 +191,10 @@ func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) 
 }
 
 var verbose bool
+var bucket string
 
 func init() {
+	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
 		fmt.Println("oss [OPTION] [FILE]")
@@ -196,7 +202,8 @@ func init() {
 		fmt.Println("If no file is specified, current directory is used.")
 		fmt.Println()
 		fmt.Println("Options:")
-		fmt.Println("    -v     Be verbosive")
+		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
+		fmt.Println("    -v         Be verbosive")
 		fmt.Println()
 		fmt.Println("Built with key ID:", string(KEY))
 		fmt.Println("Source: https://github.com/caiguanhao/oss")
