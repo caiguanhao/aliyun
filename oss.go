@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +35,10 @@ func (resp *httpResponse) GetResponse() (*string, error) {
 		return nil, respErr
 	}
 	defer resp.Body.Close()
-	response.Write(body)
+	if len(body) > 0 {
+		response.WriteByte('\n')
+		response.Write(body)
+	}
 
 	ret := response.String()
 	return &ret, nil
@@ -94,6 +98,10 @@ func getHeader(bucket, remotePath, headerName string) (*string, error) {
 }
 
 func upload(bucket, remotePath, localPath string, checkETag bool) (*string, error) {
+	if verbose {
+		fmt.Println(remotePath, "- added")
+	}
+
 	localFile, readErr := ioutil.ReadFile(localPath)
 	if readErr != nil {
 		return nil, readErr
@@ -118,12 +126,12 @@ func upload(bucket, remotePath, localPath string, checkETag bool) (*string, erro
 		}()
 		wg.Wait()
 		if localMD5 != "" && localMD5 == remoteMD5 {
-			fmt.Println(remotePath, " - no changes, ignored")
+			fmt.Println(remotePath, "- no changes, ignored")
 			return nil, nil
 		}
 	}
 
-	fmt.Println(remotePath, " - uploading")
+	fmt.Println(remotePath, "- uploading")
 	resp, reqErr := request("PUT", bucket, remotePath, localFile, localFileMD5)
 	if reqErr != nil {
 		return nil, reqErr
@@ -133,11 +141,13 @@ func upload(bucket, remotePath, localPath string, checkETag bool) (*string, erro
 	if respErr != nil {
 		return nil, respErr
 	}
+	fmt.Println(remotePath, "- done")
 
 	return response, nil
 }
 
 type result struct {
+	path     *string
 	response *string
 	err      error
 }
@@ -146,7 +156,7 @@ func process(done <-chan struct{}, paths <-chan string, c chan<- result) {
 	for path := range paths {
 		ret, err := upload("youyanchu", "/log/"+path, path, true)
 		select {
-		case c <- result{ret, err}:
+		case c <- result{&path, ret, err}:
 		case <-done:
 			return
 		}
@@ -176,8 +186,29 @@ func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) 
 	return paths, errc
 }
 
+var verbose bool
+
+func init() {
+	flag.BoolVar(&verbose, "v", false, "")
+	flag.Usage = func() {
+		fmt.Println("oss [OPTION] [FILE]")
+		fmt.Println()
+		fmt.Println("If no file is specified, current directory is used.")
+		fmt.Println()
+		fmt.Println("Options:")
+		fmt.Println("    -v     Be verbosive")
+		fmt.Println()
+		fmt.Println("Built with key ID:", string(KEY))
+		fmt.Println("Source: https://github.com/caiguanhao/oss")
+	}
+	flag.Parse()
+}
+
 func main() {
-	root := "test"
+	root := flag.Arg(0)
+	if root == "" {
+		root = "."
+	}
 
 	done := make(chan struct{})
 	defer close(done)
@@ -200,8 +231,10 @@ func main() {
 	}()
 
 	for r := range c {
-		if r.response != nil {
+		if verbose && r.response != nil {
+			path := r.path
 			ret := r.response
+			fmt.Println(*path, "returned:")
 			fmt.Println(*ret)
 		}
 	}
