@@ -202,6 +202,7 @@ var api string
 var bucket string
 var remoteRoot string
 var domain string
+var concurrency int
 
 var dryrun bool
 var verbose bool
@@ -216,6 +217,7 @@ func init() {
 	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
 	flag.StringVar(&remoteRoot, "p", string(DEFAULT_ROOT), "")
 	flag.StringVar(&domain, "z", string(DEFAULT_DOMAIN), "")
+	flag.IntVar(&concurrency, "c", 2, "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
 		fmt.Println("oss [OPTION] [FILE]")
@@ -227,6 +229,7 @@ func init() {
 		fmt.Println("    -p <path>    Specify remote root directory other than:", string(DEFAULT_ROOT))
 		fmt.Println("    -z <domain>  Specify API domain other than:", string(DEFAULT_DOMAIN))
 		fmt.Println("                 oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
+		fmt.Println("    -c <num>     Specify how many files to process concurrently, default is 2, max is 10")
 		fmt.Println()
 		fmt.Println("    -v  Be verbosive")
 		fmt.Println("    -d  Dry-run. See list of files that will be transferred,")
@@ -239,6 +242,11 @@ func init() {
 	flag.Parse()
 
 	makeAPI()
+
+	if concurrency < 1 || concurrency > 10 {
+		fmt.Println("Warning: bad concurrency value:", concurrency, ". Fall back to 2.")
+		concurrency = 2
+	}
 
 	remoteRoot = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(remoteRoot, "/")
 	if !strings.HasSuffix(remoteRoot, "/") {
@@ -262,7 +270,6 @@ func main() {
 
 	c := make(chan result)
 	var wg sync.WaitGroup
-	const concurrency = 2
 	wg.Add(concurrency)
 	for i := 0; i < concurrency; i++ {
 		go func() {
