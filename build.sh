@@ -20,11 +20,16 @@ function str_to_array {
 
 function update_access_key {
   str_to_array BUCKET
+  str_to_array REMOTE_ROOT
   str_to_array ALIYUN_ACCESS_KEY
   str_to_array ALIYUN_ACCESS_SECRET
   awk "
   /DEFAULT_BUCKET/ {
     print \"var DEFAULT_BUCKET = []byte{${BUCKET}}\"
+    next
+  }
+  /DEFAULT_ROOT/ {
+    print \"var DEFAULT_ROOT = []byte{${REMOTE_ROOT}}\"
     next
   }
   /KEY/ {
@@ -47,6 +52,10 @@ if test -z "$BUCKET"; then
   echo -n "Please enter default bucket name: "
   read BUCKET
 fi
+if test -z "$REMOTE_ROOT"; then
+  echo -n "Please enter default remote root directory: (can be empty) "
+  read REMOTE_ROOT
+fi
 if test -z "$ALIYUN_ACCESS_KEY"; then
   echo -n "Please paste your access key ID: (will not be echoed) "
   read -s ALIYUN_ACCESS_KEY
@@ -62,6 +71,7 @@ update_access_key
 go build
 
 BUCKET="bucket"
+REMOTE_ROOT="oss"
 ALIYUN_ACCESS_KEY="key"
 ALIYUN_ACCESS_SECRET="secret"
 update_access_key

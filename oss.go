@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -158,7 +159,7 @@ type result struct {
 
 func process(done <-chan struct{}, paths <-chan string, c chan<- result) {
 	for path := range paths {
-		ret, err := upload("/log/"+path, path, true)
+		ret, err := upload(remoteRoot+path, path, true)
 		select {
 		case c <- result{&path, ret, err}:
 		case <-done:
@@ -192,9 +193,11 @@ func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) 
 
 var verbose bool
 var bucket string
+var remoteRoot string
 
 func init() {
 	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
+	flag.StringVar(&remoteRoot, "p", string(DEFAULT_ROOT), "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
 		fmt.Println("oss [OPTION] [FILE]")
@@ -203,12 +206,21 @@ func init() {
 		fmt.Println()
 		fmt.Println("Options:")
 		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
+		fmt.Println("    -p <path>  Specify remote root directory other than:", string(DEFAULT_ROOT))
 		fmt.Println("    -v         Be verbosive")
 		fmt.Println()
 		fmt.Println("Built with key ID:", string(KEY))
 		fmt.Println("Source: https://github.com/caiguanhao/oss")
 	}
 	flag.Parse()
+
+	remoteRoot = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(remoteRoot, "/")
+	if !strings.HasSuffix(remoteRoot, "/") {
+		remoteRoot += "/"
+	}
+	if !strings.HasPrefix(remoteRoot, "/") {
+		remoteRoot = "/" + remoteRoot
+	}
 }
 
 func main() {
