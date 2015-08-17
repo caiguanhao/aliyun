@@ -1,0 +1,12 @@
+app:
+  image: golang:1.4.2
+  command: ["go", "build"]
+  working_dir: '/go/src/github.com/caiguanhao/oss'
+  environment:
+    - DOMAIN
+    - BUCKET
+    - REMOTE_ROOT
+    - ALIYUN_ACCESS_KEY
+    - ALIYUN_ACCESS_SECRET
+  volumes:
+    - '.:/go/src/github.com/caiguanhao/oss'

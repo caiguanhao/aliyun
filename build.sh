@@ -54,30 +54,38 @@ function update_access_key {
 }
 
 if test -z "$DOMAIN"; then
-  echo -n "Please enter default API domain: (e.g. oss-cn-hangzhou.aliyuncs.com) "
+  echo -n "Please enter default API domain: (oss-cn-hangzhou.aliyuncs.com if empty) "
   read DOMAIN
+  if test -z "$DOMAIN"; then
+    DOMAIN=oss-cn-hangzhou.aliyuncs.com
+  fi
 fi
-if test -z "$BUCKET"; then
+while test -z "$BUCKET"; do
   echo -n "Please enter default bucket name: "
   read BUCKET
-fi
+done
 if test -z "$REMOTE_ROOT"; then
   echo -n "Please enter default remote root directory: (can be empty) "
   read REMOTE_ROOT
 fi
-if test -z "$ALIYUN_ACCESS_KEY"; then
+while test -z "$ALIYUN_ACCESS_KEY"; do
   echo -n "Please paste your access key ID: (will not be echoed) "
   read -s ALIYUN_ACCESS_KEY
   echo
-fi
-if test -z "$ALIYUN_ACCESS_SECRET"; then
+done
+while test -z "$ALIYUN_ACCESS_SECRET"; do
   echo -n "Please paste your access key SECRET: (will not be echoed) "
   read -s ALIYUN_ACCESS_SECRET
   echo
-fi
+done
 update_access_key
 
-go build
+if test -n "$BUILD_DOCKER"; then
+  docker-compose up
+  docker-compose rm --force -v
+else
+  go build
+fi
 
 DOMAIN="oss-cn-hangzhou.aliyuncs.com"
 BUCKET="bucket"
