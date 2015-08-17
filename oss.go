@@ -201,37 +201,44 @@ func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) 
 var api string
 var bucket string
 var remoteRoot string
+var domain string
 
 var dryrun bool
 var verbose bool
+
+func makeAPI() string {
+	api = fmt.Sprintf("https://%s.%s", bucket, domain)
+	return api
+}
 
 func init() {
 	flag.BoolVar(&dryrun, "d", false, "")
 	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
 	flag.StringVar(&remoteRoot, "p", string(DEFAULT_ROOT), "")
+	flag.StringVar(&domain, "z", string(DEFAULT_DOMAIN), "")
 	flag.BoolVar(&verbose, "v", false, "")
-
-	api = fmt.Sprintf("https://%s.oss-cn-hangzhou.aliyuncs.com", bucket)
-
 	flag.Usage = func() {
 		fmt.Println("oss [OPTION] [FILE]")
 		fmt.Println()
 		fmt.Println("If no file is specified, current directory is used.")
 		fmt.Println()
 		fmt.Println("Options:")
-		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
-		fmt.Println("    -p <path>  Specify remote root directory other than:", string(DEFAULT_ROOT))
+		fmt.Println("    -b <name>    Specify bucket other than:", string(DEFAULT_BUCKET))
+		fmt.Println("    -p <path>    Specify remote root directory other than:", string(DEFAULT_ROOT))
+		fmt.Println("    -z <domain>  Specify API domain other than:", string(DEFAULT_DOMAIN))
+		fmt.Println("                 oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
 		fmt.Println()
-		fmt.Println("    -v         Be verbosive")
-		fmt.Println("    -d         Dry-run. See list of files that will be transferred,")
-		fmt.Println("               show full URL if -v is also set")
+		fmt.Println("    -v  Be verbosive")
+		fmt.Println("    -d  Dry-run. See list of files that will be transferred,")
+		fmt.Println("        show full URL if -v is also set")
 		fmt.Println()
 		fmt.Println("Built with key ID:", string(KEY))
-		fmt.Println("API:", api)
+		fmt.Println("API:", makeAPI())
 		fmt.Println("Source: https://github.com/caiguanhao/oss")
 	}
-
 	flag.Parse()
+
+	makeAPI()
 
 	remoteRoot = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(remoteRoot, "/")
 	if !strings.HasSuffix(remoteRoot, "/") {
