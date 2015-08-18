@@ -9,14 +9,14 @@ Or:
 
 ```
 # store configs and keys in environment variables
-for v in API_PREFIX BUCKET REMOTE_ROOT; do printf "$v: " && read $v && export $v; done && \
+for v in API_PREFIX BUCKET; do printf "$v: " && read $v && export $v; done && \
   for v in ALIYUN_ACCESS_KEY ALIYUN_ACCESS_SECRET; do printf "$v: " && read -s $v && echo && export $v; done
 
 # build without asking
 ./build.sh
 
 # clean
-unset API_PREFIX BUCKET REMOTE_ROOT ALIYUN_ACCESS_KEY ALIYUN_ACCESS_SECRET
+unset API_PREFIX BUCKET ALIYUN_ACCESS_KEY ALIYUN_ACCESS_SECRET
 ```
 
 LICENSE: MIT

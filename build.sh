@@ -21,7 +21,6 @@ function str_to_array {
 function update_access_key {
   str_to_array API_PREFIX
   str_to_array BUCKET
-  str_to_array REMOTE_ROOT
   str_to_array ALIYUN_ACCESS_KEY
   str_to_array ALIYUN_ACCESS_SECRET
   awk "
@@ -31,10 +30,6 @@ function update_access_key {
   }
   /DEFAULT_BUCKET/ {
     print \"var DEFAULT_BUCKET = []byte{${BUCKET}}\"
-    next
-  }
-  /DEFAULT_ROOT/ {
-    print \"var DEFAULT_ROOT = []byte{${REMOTE_ROOT}}\"
     next
   }
   /KEY/ {
@@ -65,10 +60,6 @@ while test -z "$BUCKET"; do
   echo -n "Please enter default bucket name: "
   read BUCKET
 done
-if test -z "$REMOTE_ROOT"; then
-  echo -n "Please enter default remote root directory: (can be empty) "
-  read REMOTE_ROOT
-fi
 while test -z "$ALIYUN_ACCESS_KEY"; do
   echo -n "Please paste your access key ID: (will not be echoed) "
   read -s ALIYUN_ACCESS_KEY
@@ -90,7 +81,6 @@ fi
 
 API_PREFIX=$_DEFAULT_API_PREFIX
 BUCKET="bucket"
-REMOTE_ROOT="oss"
 ALIYUN_ACCESS_KEY="key"
 ALIYUN_ACCESS_SECRET="secret"
 update_access_key

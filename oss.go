@@ -164,43 +164,85 @@ type result struct {
 	err      error
 }
 
-func process(done <-chan struct{}, paths <-chan string, c chan<- result) {
+func process(done <-chan struct{}, paths <-chan [2]string, c chan<- result) {
 	for path := range paths {
-		ret, err := upload(remoteRoot+path, path, true)
+		ret, err := upload(path[1], path[0], true)
+		p := path[0]
 		select {
-		case c <- result{&path, ret, err}:
+		case c <- result{&p, ret, err}:
 		case <-done:
 			return
 		}
 	}
 }
 
-func walkFiles(done <-chan struct{}, root string) (<-chan string, <-chan error) {
-	paths := make(chan string)
+func getLastPartOfPath(input string) string {
+	index := strings.LastIndex(input, "/")
+	if index > -1 {
+		return input[index+1:]
+	}
+	return input
+}
+
+func removeFirstPartOfPath(input string) string {
+	index := strings.Index(input, "/")
+	if index > -1 {
+		return input[index:]
+	}
+	return input
+}
+
+func pathsForFile(src *string) [2]string {
+	if strings.HasSuffix(target, "/") {
+		return [2]string{*src, target + getLastPartOfPath(*src)}
+	} else {
+		return [2]string{*src, target}
+	}
+}
+
+func pathsForDirectory(src *string) [2]string {
+	if strings.HasSuffix(target, "/") {
+		return [2]string{*src, target + *src}
+	} else {
+		return [2]string{*src, target + removeFirstPartOfPath(*src)}
+	}
+}
+
+func walkFiles(done <-chan struct{}, root string) (<-chan [2]string, <-chan error) {
+	paths := make(chan [2]string)
 	errc := make(chan error, 1)
 	go func() {
 		defer close(paths)
-		errc <- filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if !info.Mode().IsRegular() {
+		fi, err := os.Stat(root)
+		if err != nil {
+			errc <- err
+		} else if fi.Mode().IsRegular() {
+			defer close(errc)
+			paths <- pathsForFile(&root)
+		} else {
+			errc <- filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.Mode().IsRegular() {
+					return nil
+				}
+				select {
+				case paths <- pathsForDirectory(&path):
+				case <-done:
+					return errors.New("walk canceled")
+				}
 				return nil
-			}
-			select {
-			case paths <- path:
-			case <-done:
-				return errors.New("walk canceled")
-			}
-			return nil
-		})
+			})
+		}
 	}()
 	return paths, errc
 }
 
+var source, target string
+
 var api string
 var bucket string
-var remoteRoot string
 var apiPrefix string
 var concurrency int
 
@@ -219,20 +261,16 @@ func makeAPI() string {
 func init() {
 	flag.BoolVar(&dryrun, "d", false, "")
 	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
-	flag.StringVar(&remoteRoot, "p", string(DEFAULT_ROOT), "")
 	flag.StringVar(&apiPrefix, "z", string(DEFAULT_API_PREFIX), "")
 	flag.IntVar(&concurrency, "c", 2, "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
-		fmt.Println("oss [OPTION] [FILE]")
-		fmt.Println()
-		fmt.Println("If no file is specified, current directory is used.")
+		fmt.Println("oss [OPTION] SOURCE TARGET")
 		fmt.Println()
 		fmt.Println("Options:")
-		fmt.Println("    -c <num>     Specify how many files to process concurrently, default is 2, max is 10")
+		fmt.Println("    -c <num>   Specify how many files to process concurrently, default is 2, max is 10")
 		fmt.Println()
 		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
-		fmt.Println("    -p <path>  Specify remote root directory other than:", string(DEFAULT_ROOT))
 		fmt.Println("    -z <url>   Specify API URL prefix other than:", string(DEFAULT_API_PREFIX))
 		fmt.Println("       You can use custom domain or official URL like this:")
 		fmt.Println("       {http, https}://%s.oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
@@ -248,32 +286,35 @@ func init() {
 	}
 	flag.Parse()
 
+	source = flag.Arg(0)
+	target = flag.Arg(1)
+
 	makeAPI()
 
 	if concurrency < 1 || concurrency > 10 {
 		fmt.Println("Warning: bad concurrency value:", concurrency, ". Fall back to 2.")
 		concurrency = 2
 	}
-
-	remoteRoot = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(remoteRoot, "/")
-	if !strings.HasSuffix(remoteRoot, "/") {
-		remoteRoot += "/"
-	}
-	if !strings.HasPrefix(remoteRoot, "/") {
-		remoteRoot = "/" + remoteRoot
-	}
 }
 
 func main() {
-	root := flag.Arg(0)
-	if root == "" {
-		root = "."
+	if source == "" {
+		fmt.Println("Error: Please specify source.")
+		return
+	}
+	if target == "" {
+		fmt.Println("Error: Please specify target.")
+		return
+	}
+	target = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(target, "/")
+	if !strings.HasPrefix(target, "/") {
+		target = "/" + target
 	}
 
 	done := make(chan struct{})
 	defer close(done)
 
-	paths, errc := walkFiles(done, root)
+	paths, errc := walkFiles(done, source)
 
 	c := make(chan result)
 	var wg sync.WaitGroup

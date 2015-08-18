@@ -5,7 +5,6 @@ app:
   environment:
     - API_PREFIX
     - BUCKET
-    - REMOTE_ROOT
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
