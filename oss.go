@@ -201,7 +201,11 @@ func pathsForFile(src *string) [2]string {
 
 func pathsForDirectory(root, src *string) [2]string {
 	if strings.HasSuffix(target, "/") {
-		path, _ := filepath.Rel(filepath.Dir(*root), *src)
+		r := *root
+		if strings.HasSuffix(r, "/") {
+			r = strings.TrimSuffix(r, "/")
+		}
+		path, _ := filepath.Rel(filepath.Dir(r), *src)
 		return [2]string{*src, target + path}
 	} else {
 		path, _ := filepath.Rel(*root, *src)

@@ -64,6 +64,12 @@ func TestWalkFiles(t *testing.T) {
 		{"test/fixtures/f", "/e/fixtures/f"},
 	})
 
+	testWalkFiles(t, []string{"test/fixtures/"}, "/e/", [][]string{
+		{"test/fixtures/a/b/c", "/e/fixtures/a/b/c"},
+		{"test/fixtures/d/e", "/e/fixtures/d/e"},
+		{"test/fixtures/f", "/e/fixtures/f"},
+	})
+
 	testWalkFiles(t, []string{"test/fixtures/a", "test/fixtures/f"}, "/", [][]string{
 		{"test/fixtures/a/b/c", "/a/b/c"},
 		{"test/fixtures/f", "/f"},
