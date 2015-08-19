@@ -23,6 +23,7 @@ function update_access_key {
   str_to_array BUCKET
   str_to_array ALIYUN_ACCESS_KEY
   str_to_array ALIYUN_ACCESS_SECRET
+  str_to_array MADE
   awk "
   /DEFAULT_API_PREFIX/ {
     print \"var DEFAULT_API_PREFIX = []byte{${API_PREFIX}}\"
@@ -38,6 +39,10 @@ function update_access_key {
   }
   /SECRET/ {
     print \"var SECRET = []byte{${ALIYUN_ACCESS_SECRET}}\"
+    next
+  }
+  /MADE/ {
+    print \"var MADE = []byte{${MADE}}\"
     next
   }
   {
@@ -70,6 +75,7 @@ while test -z "$ALIYUN_ACCESS_SECRET"; do
   read -s ALIYUN_ACCESS_SECRET
   echo
 done
+MADE="on $(date '+%Y-%m-%d %H:%M:%S') ($(git rev-parse --short HEAD))"
 update_access_key
 
 if test -n "$BUILD_DOCKER"; then
@@ -83,4 +89,5 @@ API_PREFIX=$_DEFAULT_API_PREFIX
 BUCKET="bucket"
 ALIYUN_ACCESS_KEY="key"
 ALIYUN_ACCESS_SECRET="secret"
+MADE=""
 update_access_key

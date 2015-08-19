@@ -284,7 +284,7 @@ func init() {
 		fmt.Println("    -d  Dry-run. See list of files that will be transferred,")
 		fmt.Println("        show full URL if -v is also set")
 		fmt.Println()
-		fmt.Println("Built with key ID:", string(KEY))
+		fmt.Println("Built with key ID", string(KEY), string(MADE))
 		fmt.Println("API:", makeAPI())
 		fmt.Println("Source: https://github.com/caiguanhao/oss")
 	}

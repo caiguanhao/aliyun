@@ -4,3 +4,4 @@ var DEFAULT_API_PREFIX = []byte{'h', 't', 't', 'p', 's', ':', '/', '/', '%', 's'
 var DEFAULT_BUCKET = []byte{'b', 'u', 'c', 'k', 'e', 't'}
 var KEY = []byte{'k', 'e', 'y'}
 var SECRET = []byte{'s', 'e', 'c', 'r', 'e', 't'}
+var MADE = []byte{}
