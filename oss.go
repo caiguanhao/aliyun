@@ -184,15 +184,14 @@ func getLastPartOfPath(input string) string {
 	return input
 }
 
-func removeFirstPartOfPath(input string) string {
-	index := strings.Index(input, "/")
-	if index > -1 {
-		return input[index:]
-	}
-	return input
-}
-
 func pathsForFile(src *string) [2]string {
+	if len(source) > 1 {
+		path := target
+		if !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+		return [2]string{*src, path + getLastPartOfPath(*src)}
+	}
 	if strings.HasSuffix(target, "/") {
 		return [2]string{*src, target + getLastPartOfPath(*src)}
 	} else {
@@ -200,46 +199,51 @@ func pathsForFile(src *string) [2]string {
 	}
 }
 
-func pathsForDirectory(src *string) [2]string {
+func pathsForDirectory(root, src *string) [2]string {
 	if strings.HasSuffix(target, "/") {
-		return [2]string{*src, target + *src}
+		path, _ := filepath.Rel(filepath.Dir(*root), *src)
+		return [2]string{*src, target + path}
 	} else {
-		return [2]string{*src, target + removeFirstPartOfPath(*src)}
+		path, _ := filepath.Rel(*root, *src)
+		return [2]string{*src, target + "/" + path}
 	}
 }
 
-func walkFiles(done <-chan struct{}, root string) (<-chan [2]string, <-chan error) {
+func walkFiles(done <-chan struct{}) (<-chan [2]string, <-chan error) {
 	paths := make(chan [2]string)
-	errc := make(chan error, 1)
+	errc := make(chan error, len(source))
 	go func() {
 		defer close(paths)
-		fi, err := os.Stat(root)
-		if err != nil {
-			errc <- err
-		} else if fi.Mode().IsRegular() {
-			defer close(errc)
-			paths <- pathsForFile(&root)
-		} else {
-			errc <- filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				if !info.Mode().IsRegular() {
+		defer close(errc)
+		for _, root := range source {
+			fi, err := os.Stat(root)
+			if err != nil {
+				errc <- err
+			} else if fi.Mode().IsRegular() {
+				paths <- pathsForFile(&root)
+			} else {
+				errc <- filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if !info.Mode().IsRegular() {
+						return nil
+					}
+					select {
+					case paths <- pathsForDirectory(&root, &path):
+					case <-done:
+						return errors.New("walk canceled")
+					}
 					return nil
-				}
-				select {
-				case paths <- pathsForDirectory(&path):
-				case <-done:
-					return errors.New("walk canceled")
-				}
-				return nil
-			})
+				})
+			}
 		}
 	}()
 	return paths, errc
 }
 
-var source, target string
+var source []string
+var target string
 
 var api string
 var bucket string
@@ -265,7 +269,7 @@ func init() {
 	flag.IntVar(&concurrency, "c", 2, "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
-		fmt.Println("oss [OPTION] SOURCE TARGET")
+		fmt.Println("oss [OPTION] SOURCE ... TARGET")
 		fmt.Println()
 		fmt.Println("Options:")
 		fmt.Println("    -c <num>   Specify how many files to process concurrently, default is 2, max is 10")
@@ -286,9 +290,6 @@ func init() {
 	}
 	flag.Parse()
 
-	source = flag.Arg(0)
-	target = flag.Arg(1)
-
 	makeAPI()
 
 	if concurrency < 1 || concurrency > 10 {
@@ -298,14 +299,14 @@ func init() {
 }
 
 func main() {
-	if source == "" {
-		fmt.Println("Error: Please specify source.")
+	l := len(flag.Args())
+	if l < 2 {
+		fmt.Println("Error: Please specify source and target.")
 		return
 	}
-	if target == "" {
-		fmt.Println("Error: Please specify target.")
-		return
-	}
+	source = flag.Args()[0 : l-1]
+	target = flag.Args()[l-1]
+
 	target = regexp.MustCompile("/{2,}").ReplaceAllLiteralString(target, "/")
 	if !strings.HasPrefix(target, "/") {
 		target = "/" + target
@@ -314,7 +315,7 @@ func main() {
 	done := make(chan struct{})
 	defer close(done)
 
-	paths, errc := walkFiles(done, source)
+	paths, errc := walkFiles(done)
 
 	c := make(chan result)
 	var wg sync.WaitGroup
