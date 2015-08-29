@@ -67,7 +67,7 @@ func request(method, remotePath string, localFile []byte, localFileMD5 []byte) (
 	date := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	path := fmt.Sprintf("/%s%s", bucket, remotePath)
 	msg := strings.Join([]string{method, md5sum, contentType, date, path}, "\n")
-	mac := hmac.New(sha1.New, SECRET)
+	mac := hmac.New(sha1.New, []byte(SECRET))
 	mac.Write([]byte(msg))
 	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	auth := fmt.Sprintf("OSS %s:%s", KEY, signature)
@@ -268,8 +268,8 @@ func makeAPI() string {
 
 func init() {
 	flag.BoolVar(&dryrun, "d", false, "")
-	flag.StringVar(&bucket, "b", string(DEFAULT_BUCKET), "")
-	flag.StringVar(&apiPrefix, "z", string(DEFAULT_API_PREFIX), "")
+	flag.StringVar(&bucket, "b", DEFAULT_BUCKET, "")
+	flag.StringVar(&apiPrefix, "z", DEFAULT_API_PREFIX, "")
 	flag.IntVar(&concurrency, "c", 2, "")
 	flag.BoolVar(&verbose, "v", false, "")
 	flag.Usage = func() {
@@ -278,8 +278,8 @@ func init() {
 		fmt.Println("Options:")
 		fmt.Println("    -c <num>   Specify how many files to process concurrently, default is 2, max is 10")
 		fmt.Println()
-		fmt.Println("    -b <name>  Specify bucket other than:", string(DEFAULT_BUCKET))
-		fmt.Println("    -z <url>   Specify API URL prefix other than:", string(DEFAULT_API_PREFIX))
+		fmt.Println("    -b <name>  Specify bucket other than:", DEFAULT_BUCKET)
+		fmt.Println("    -z <url>   Specify API URL prefix other than:", DEFAULT_API_PREFIX)
 		fmt.Println("       You can use custom domain or official URL like this:")
 		fmt.Println("       {http, https}://%s.oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
 		fmt.Println("       Note: %s will be replaced with the bucket name if specified")
@@ -288,7 +288,7 @@ func init() {
 		fmt.Println("    -d  Dry-run. See list of files that will be transferred,")
 		fmt.Println("        show full URL if -v is also set")
 		fmt.Println()
-		fmt.Println("Built with key ID", string(KEY), string(MADE))
+		fmt.Println("Built with key ID", KEY, MADE)
 		fmt.Println("API:", makeAPI())
 		fmt.Println("Source: https://github.com/caiguanhao/oss")
 	}

@@ -11,7 +11,7 @@ function str_to_array {
       if (i > 1) {
         printf(", ")
       }
-      printf("'\''%s'\''", chars[i])
+      printf("\\\\\\\"%s\\\\\\\"", chars[i])
     }
   }
   ')"
@@ -26,23 +26,23 @@ function update_access_key {
   str_to_array MADE
   awk "
   /DEFAULT_API_PREFIX/ {
-    print \"var DEFAULT_API_PREFIX = []byte{${API_PREFIX}}\"
+    print \"var DEFAULT_API_PREFIX = strings.Join([]string{${API_PREFIX}}, \\\"\\\")\"
     next
   }
   /DEFAULT_BUCKET/ {
-    print \"var DEFAULT_BUCKET = []byte{${BUCKET}}\"
+    print \"var DEFAULT_BUCKET = strings.Join([]string{${BUCKET}}, \\\"\\\")\"
     next
   }
   /KEY/ {
-    print \"var KEY = []byte{${ALIYUN_ACCESS_KEY}}\"
+    print \"var KEY = strings.Join([]string{${ALIYUN_ACCESS_KEY}}, \\\"\\\")\"
     next
   }
   /SECRET/ {
-    print \"var SECRET = []byte{${ALIYUN_ACCESS_SECRET}}\"
+    print \"var SECRET = strings.Join([]string{${ALIYUN_ACCESS_SECRET}}, \\\"\\\")\"
     next
   }
   /MADE/ {
-    print \"var MADE = []byte{${MADE}}\"
+    print \"var MADE = strings.Join([]string{${MADE}}, \\\"\\\")\"
     next
   }
   {
