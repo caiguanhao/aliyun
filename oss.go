@@ -153,6 +153,7 @@ func upload(remotePath, localPath string, checkETag bool) (*string, error) {
 		fmt.Println(remotePath, "- fail -", resp.Status)
 		return response, nil
 	}
+	totalBytes += len(localFile)
 	fmt.Println(remotePath, "- done")
 
 	return response, nil
@@ -246,6 +247,34 @@ func walkFiles(done <-chan struct{}) (<-chan [2]string, <-chan error) {
 	return paths, errc
 }
 
+func fmtFloat(float float64, suffix string) string {
+	return strings.TrimSuffix(strings.TrimRight(fmt.Sprintf("%.3f", float), "0"), ".") + suffix
+}
+
+func humanBytes(bytes float64) string {
+	const TB = 1 << 40
+	const GB = 1 << 30
+	const MB = 1 << 20
+	const KB = 1 << 10
+	abs := bytes
+	if bytes < 0 {
+		abs = bytes * -1
+	}
+	if abs >= TB {
+		return fmtFloat(bytes/TB, " TB")
+	}
+	if abs >= GB {
+		return fmtFloat(bytes/GB, " GB")
+	}
+	if abs >= MB {
+		return fmtFloat(bytes/MB, " MB")
+	}
+	if abs >= KB {
+		return fmtFloat(bytes/KB, " KB")
+	}
+	return fmt.Sprintf("%.0f bytes", bytes)
+}
+
 var source []string
 var target string
 
@@ -256,6 +285,8 @@ var concurrency int
 
 var dryrun bool
 var verbose bool
+
+var totalBytes int
 
 func makeAPI() string {
 	if strings.Count(apiPrefix, "%s") == 1 {
@@ -316,6 +347,8 @@ func main() {
 		target = "/" + target
 	}
 
+	timeStart := time.Now()
+
 	done := make(chan struct{})
 	defer close(done)
 
@@ -346,5 +379,15 @@ func main() {
 
 	if err := <-errc; err != nil {
 		fmt.Println(err)
+	}
+
+	if totalBytes > 0 {
+		since := time.Since(timeStart)
+		speed := humanBytes(float64(totalBytes) / since.Seconds())
+		used := regexp.MustCompile("(\\.[0-9]{3})[0-9]+").ReplaceAllString(since.String(), "$1")
+		fmt.Printf(
+			"transferred: %s (%d bytes)  time used: %s  avg. speed: %s\n",
+			humanBytes(float64(totalBytes)), totalBytes, used, speed+"/s",
+		)
 	}
 }
