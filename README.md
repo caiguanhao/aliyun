@@ -6,7 +6,7 @@ Command-line tool to upload files to Aliyun's Open Storage Service ([OSS](http:/
 USAGE
 -----
 
-```
+```help
 oss [OPTION] SOURCE ... TARGET
 
 Options:
@@ -17,6 +17,8 @@ Options:
        You can use custom domain or official URL like this:
        {http, https}://%s.oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com
        Note: %s will be replaced with the bucket name if specified
+
+    --parents  Use full source file name under TARGET
 
     -v  Be verbosive
     -d  Dry-run. See list of files that will be transferred,
