@@ -33,7 +33,7 @@ func testWalkFiles(t *testing.T, _source []string, _target string, expects [][]s
 	}
 }
 
-func TestWalkFiles(t *testing.T) {
+func TestWalkFiles__pathsForFile(t *testing.T) {
 	testWalkFiles(t, []string{"test/fixtures/a/b/c"}, "/", [][]string{
 		{"test/fixtures/a/b/c", "/c"},
 	})
@@ -45,7 +45,9 @@ func TestWalkFiles(t *testing.T) {
 	testWalkFiles(t, []string{"test/fixtures/a/b/c"}, "/e/", [][]string{
 		{"test/fixtures/a/b/c", "/e/c"},
 	})
+}
 
+func TestWalkFiles__pathsForDirectory(t *testing.T) {
 	testWalkFiles(t, []string{"test/fixtures"}, "/", [][]string{
 		{"test/fixtures/a/b/c", "/fixtures/a/b/c"},
 		{"test/fixtures/d/e", "/fixtures/d/e"},
@@ -69,7 +71,9 @@ func TestWalkFiles(t *testing.T) {
 		{"test/fixtures/d/e", "/e/fixtures/d/e"},
 		{"test/fixtures/f", "/e/fixtures/f"},
 	})
+}
 
+func TestWalkFiles__mix(t *testing.T) {
 	testWalkFiles(t, []string{"test/fixtures/a", "test/fixtures/f"}, "/", [][]string{
 		{"test/fixtures/a/b/c", "/a/b/c"},
 		{"test/fixtures/f", "/f"},
@@ -83,6 +87,69 @@ func TestWalkFiles(t *testing.T) {
 	testWalkFiles(t, []string{"test/fixtures/a", "test/fixtures/f"}, "/e/", [][]string{
 		{"test/fixtures/a/b/c", "/e/a/b/c"},
 		{"test/fixtures/f", "/e/f"},
+	})
+}
+
+func TestWalkFiles__parents__pathsForFile(t *testing.T) {
+	parentsPath = true
+
+	testWalkFiles(t, []string{"test/fixtures/a/b/c"}, "/", [][]string{
+		{"test/fixtures/a/b/c", "/test/fixtures/a/b/c"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures/a/b/c"}, "/e", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures/a/b/c"}, "/e/", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+	})
+}
+
+func TestWalkFiles__parents__pathsForDirectory(t *testing.T) {
+	parentsPath = true
+
+	testWalkFiles(t, []string{"test/fixtures"}, "/", [][]string{
+		{"test/fixtures/a/b/c", "/test/fixtures/a/b/c"},
+		{"test/fixtures/d/e", "/test/fixtures/d/e"},
+		{"test/fixtures/f", "/test/fixtures/f"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures"}, "/e", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+		{"test/fixtures/d/e", "/e/test/fixtures/d/e"},
+		{"test/fixtures/f", "/e/test/fixtures/f"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures"}, "/e/", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+		{"test/fixtures/d/e", "/e/test/fixtures/d/e"},
+		{"test/fixtures/f", "/e/test/fixtures/f"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures/"}, "/e/", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+		{"test/fixtures/d/e", "/e/test/fixtures/d/e"},
+		{"test/fixtures/f", "/e/test/fixtures/f"},
+	})
+}
+
+func TestWalkFiles__parents__mix(t *testing.T) {
+	parentsPath = true
+
+	testWalkFiles(t, []string{"test/fixtures/a", "test/fixtures/f"}, "/", [][]string{
+		{"test/fixtures/a/b/c", "/test/fixtures/a/b/c"},
+		{"test/fixtures/f", "/test/fixtures/f"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures/a", "test/fixtures/f"}, "/e", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+		{"test/fixtures/f", "/e/test/fixtures/f"},
+	})
+
+	testWalkFiles(t, []string{"test/fixtures/a", "test/fixtures/f"}, "/e/", [][]string{
+		{"test/fixtures/a/b/c", "/e/test/fixtures/a/b/c"},
+		{"test/fixtures/f", "/e/test/fixtures/f"},
 	})
 }
 

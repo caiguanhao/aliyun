@@ -186,21 +186,33 @@ func getLastPartOfPath(input string) string {
 }
 
 func pathsForFile(src *string) [2]string {
+	path := target
+	if parentsPath {
+		if !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+		path += filepath.Dir(*src) + "/"
+	}
 	if len(source) > 1 {
-		path := target
 		if !strings.HasSuffix(path, "/") {
 			path += "/"
 		}
 		return [2]string{*src, path + getLastPartOfPath(*src)}
 	}
-	if strings.HasSuffix(target, "/") {
-		return [2]string{*src, target + getLastPartOfPath(*src)}
+	if strings.HasSuffix(path, "/") {
+		return [2]string{*src, path + getLastPartOfPath(*src)}
 	} else {
-		return [2]string{*src, target}
+		return [2]string{*src, path}
 	}
 }
 
 func pathsForDirectory(root, src *string) [2]string {
+	if parentsPath {
+		if strings.HasSuffix(target, "/") {
+			return [2]string{*src, target + *src}
+		}
+		return [2]string{*src, target + "/" + *src}
+	}
 	if strings.HasSuffix(target, "/") {
 		r := *root
 		if strings.HasSuffix(r, "/") {
@@ -283,6 +295,8 @@ var bucket string
 var apiPrefix string
 var concurrency int
 
+var parentsPath bool
+
 var dryrun bool
 var verbose bool
 
@@ -303,6 +317,7 @@ func init() {
 	flag.StringVar(&apiPrefix, "z", DEFAULT_API_PREFIX, "")
 	flag.IntVar(&concurrency, "c", 2, "")
 	flag.BoolVar(&verbose, "v", false, "")
+	flag.BoolVar(&parentsPath, "parents", false, "")
 	flag.Usage = func() {
 		fmt.Println("oss [OPTION] SOURCE ... TARGET")
 		fmt.Println()
@@ -314,6 +329,8 @@ func init() {
 		fmt.Println("       You can use custom domain or official URL like this:")
 		fmt.Println("       {http, https}://%s.oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com")
 		fmt.Println("       Note: %s will be replaced with the bucket name if specified")
+		fmt.Println()
+		fmt.Println("    --parents  Use full source file name under TARGET")
 		fmt.Println()
 		fmt.Println("    -v  Be verbosive")
 		fmt.Println("    -d  Dry-run. See list of files that will be transferred,")
