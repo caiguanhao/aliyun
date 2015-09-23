@@ -3,6 +3,8 @@ oss
 
 Command-line tool to upload files to Aliyun's Open Storage Service ([OSS](http://www.aliyun.com/product/oss)).
 
+[![Circle CI](https://circleci.com/gh/caiguanhao/oss.svg?style=svg)](https://circleci.com/gh/caiguanhao/oss)
+
 USAGE
 -----
 
