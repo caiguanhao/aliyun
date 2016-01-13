@@ -2,6 +2,8 @@
 
 set -e
 
+PROJECTS="oss oss-diff oss-get"
+
 function str_to_array {
   eval "local input=\"\$$1\""
   input="$(echo "$input" | awk '
@@ -79,7 +81,7 @@ MADE="on $(date '+%Y-%m-%d %H:%M:%S') ($(git rev-parse --short HEAD))"
 
 __DIR__="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-for project in oss oss-diff; do
+for project in $PROJECTS; do
   echo "Building $project ..."
   cd "$__DIR__/$project"
   update_access_key
@@ -91,7 +93,7 @@ for project in oss oss-diff; do
   fi
 done
 
-for project in oss oss-diff; do
+for project in $PROJECTS; do
   cd "$__DIR__/$project"
   API_PREFIX=$_DEFAULT_API_PREFIX
   BUCKET="bucket"
