@@ -1,11 +1,23 @@
-app:
-  image: golang:1.4.2
+oss:
+  image: golang:1.5.0
   command: ["go", "build"]
-  working_dir: '/go/src/github.com/caiguanhao/oss'
+  working_dir: '/go/src/github.com/caiguanhao/oss/oss'
   environment:
     - API_PREFIX
     - BUCKET
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
-    - '.:/go/src/github.com/caiguanhao/oss'
+    - './oss:/go/src/github.com/caiguanhao/oss/oss'
+
+oss-diff:
+  image: golang:1.5.0
+  command: ["go", "build"]
+  working_dir: '/go/src/github.com/caiguanhao/oss/oss-diff'
+  environment:
+    - API_PREFIX
+    - BUCKET
+    - ALIYUN_ACCESS_KEY
+    - ALIYUN_ACCESS_SECRET
+  volumes:
+    - './oss-diff:/go/src/github.com/caiguanhao/oss/oss-diff'

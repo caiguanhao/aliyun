@@ -15,7 +15,7 @@ function str_to_array {
     }
   }
   ')"
-  eval "$1=\"$input\""
+  eval "_$1=\"$input\""
 }
 
 function update_access_key {
@@ -26,23 +26,23 @@ function update_access_key {
   str_to_array MADE
   awk "
   /DEFAULT_API_PREFIX/ {
-    print \"var DEFAULT_API_PREFIX = strings.Join([]string{${API_PREFIX}}, \\\"\\\")\"
+    print \"var DEFAULT_API_PREFIX = strings.Join([]string{${_API_PREFIX}}, \\\"\\\")\"
     next
   }
   /DEFAULT_BUCKET/ {
-    print \"var DEFAULT_BUCKET = strings.Join([]string{${BUCKET}}, \\\"\\\")\"
+    print \"var DEFAULT_BUCKET = strings.Join([]string{${_BUCKET}}, \\\"\\\")\"
     next
   }
   /KEY/ {
-    print \"var KEY = strings.Join([]string{${ALIYUN_ACCESS_KEY}}, \\\"\\\")\"
+    print \"var KEY = strings.Join([]string{${_ALIYUN_ACCESS_KEY}}, \\\"\\\")\"
     next
   }
   /SECRET/ {
-    print \"var SECRET = strings.Join([]string{${ALIYUN_ACCESS_SECRET}}, \\\"\\\")\"
+    print \"var SECRET = strings.Join([]string{${_ALIYUN_ACCESS_SECRET}}, \\\"\\\")\"
     next
   }
   /MADE/ {
-    print \"var MADE = strings.Join([]string{${MADE}}, \\\"\\\")\"
+    print \"var MADE = strings.Join([]string{${_MADE}}, \\\"\\\")\"
     next
   }
   {
@@ -76,18 +76,27 @@ while test -z "$ALIYUN_ACCESS_SECRET"; do
   echo
 done
 MADE="on $(date '+%Y-%m-%d %H:%M:%S') ($(git rev-parse --short HEAD))"
-update_access_key
 
-if test -n "$BUILD_DOCKER"; then
-  docker-compose up
-  docker-compose rm --force -v
-else
-  go build
-fi
+__DIR__="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-API_PREFIX=$_DEFAULT_API_PREFIX
-BUCKET="bucket"
-ALIYUN_ACCESS_KEY="key"
-ALIYUN_ACCESS_SECRET="secret"
-MADE=""
-update_access_key
+for project in oss oss-diff; do
+  echo "Building $project ..."
+  cd "$__DIR__/$project"
+  update_access_key
+  if test -n "$BUILD_DOCKER"; then
+    docker-compose up $project
+    docker-compose rm --force -v
+  else
+    go build
+  fi
+done
+
+for project in oss oss-diff; do
+  cd "$__DIR__/$project"
+  API_PREFIX=$_DEFAULT_API_PREFIX
+  BUCKET="bucket"
+  ALIYUN_ACCESS_KEY="key"
+  ALIYUN_ACCESS_SECRET="secret"
+  MADE=""
+  update_access_key
+done

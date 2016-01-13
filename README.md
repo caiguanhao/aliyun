@@ -1,12 +1,14 @@
 oss
 ===
 
-Command-line tool to upload files to Aliyun's Open Storage Service ([OSS](http://www.aliyun.com/product/oss)).
+Command-line tool to use Aliyun's Open Storage Service ([OSS](http://www.aliyun.com/product/oss)).
 
 [![Circle CI](https://circleci.com/gh/caiguanhao/oss.svg?style=svg)](https://circleci.com/gh/caiguanhao/oss)
 
 USAGE
 -----
+
+To upload files:
 
 ```help
 oss [OPTION] SOURCE ... TARGET
@@ -31,13 +33,31 @@ API: https://my-bucket.oss-cn-hangzhou.aliyuncs.com
 Source: https://github.com/caiguanhao/oss
 ```
 
+To get list of different files:
+
+```help
+oss-diff [OPTION] LOCAL-DIR  REMOTE-DIR
+                  LOCAL-FILE REMOTE-FILE
+
+Options:
+    -r, --reverse  Print LOCAL file paths to stderr, REMOTE to stdout
+
+    -m, --md5      Verify MD5 checksum besides file name and size
+    -s, --shhh     Show only file path
+
+Status code: 0 - local and remote are identical
+             1 - local has different files
+             2 - remote has different files
+             3 - both local and remote have different files
+```
+
 BUILD
 -----
 
-Run `./build.sh` and then enter configs and key ID and secret to build `oss`.
+Run `./build.sh` and then enter configs, key ID and secret to build `oss` and `oss-diff`.
 
 If you are on Mac OS X and you want to build a Linux version,
-you can run `BUILD_DOCKER=1 ./build.sh` to build `oss` in a Docker container.
+you can run `BUILD_DOCKER=1 ./build.sh` to build `oss` and `oss-diff` in a Docker container.
 You need to install `boot2docker` and `docker-compose`.
 
 To continously build `oss`, you can also set environment variables:
