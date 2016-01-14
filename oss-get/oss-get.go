@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -21,17 +22,20 @@ var bucket string
 var remote string
 var local string
 
+func sign(date, uri string) string {
+	msg := strings.Join([]string{"GET", "", "", date, fmt.Sprintf("/%s%s", bucket, uri)}, "\n")
+	mac := hmac.New(sha1.New, []byte(SECRET))
+	mac.Write([]byte(msg))
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
 func get(remotePath string) (*http.Response, error) {
 	req, reqErr := http.NewRequest("GET", api+remotePath, nil)
 	if reqErr != nil {
 		return nil, reqErr
 	}
-	date := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
-	path := fmt.Sprintf("/%s%s", bucket, remotePath)
-	msg := strings.Join([]string{"GET", "", "", date, path}, "\n")
-	mac := hmac.New(sha1.New, []byte(SECRET))
-	mac.Write([]byte(msg))
-	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	date := time.Now().UTC().Format(time.RFC1123)
+	signature := sign(date, remotePath)
 	auth := fmt.Sprintf("OSS %s:%s", KEY, signature)
 	req.Header.Set("Authorization", auth)
 	req.Header.Set("Date", date)
@@ -114,9 +118,14 @@ func humanBytes(bytes float64) string {
 	return fmt.Sprintf("%.0f bytes", bytes)
 }
 
+var curlScript bool
+
 func init() {
+	flag.BoolVar(&curlScript, "curl", false, "")
 	flag.Usage = func() {
-		fmt.Println("oss-get REMOTE-FILE LOCAL-FILE")
+		fmt.Println("oss-get [--curl] REMOTE-FILE LOCAL-FILE")
+		fmt.Println()
+		fmt.Println("  --curl   generate curl script")
 	}
 	flag.Parse()
 }
@@ -134,18 +143,26 @@ func main() {
 	apiPrefix = DEFAULT_API_PREFIX
 	bucket = DEFAULT_BUCKET
 	api = makeAPI()
-	downloaded, err := download()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if downloaded > 0 {
-		since := time.Since(timeStart)
-		speed := humanBytes(float64(downloaded) / since.Seconds())
-		used := regexp.MustCompile("(\\.[0-9]{3})[0-9]+").ReplaceAllString(since.String(), "$1")
-		fmt.Printf(
-			"transferred: %s (%d bytes)  time used: %s  avg. speed: %s\n",
-			humanBytes(float64(downloaded)), downloaded, used, speed+"/s",
-		)
+	if curlScript {
+		uri := strings.TrimLeft(remote, "/")
+		date := time.Now().Unix() + 3600
+		signature := sign(fmt.Sprintf("%d", date), remote)
+		fmt.Printf("curl -#o '%s' '%s/%s?OSSAccessKeyId=%s&Expires=%d&Signature=%s'\n",
+			path.Base(remote), api, url.QueryEscape(uri), KEY, date, url.QueryEscape(signature))
+	} else {
+		downloaded, err := download()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if downloaded > 0 {
+			since := time.Since(timeStart)
+			speed := humanBytes(float64(downloaded) / since.Seconds())
+			used := regexp.MustCompile("(\\.[0-9]{3})[0-9]+").ReplaceAllString(since.String(), "$1")
+			fmt.Printf(
+				"transferred: %s (%d bytes)  time used: %s  avg. speed: %s\n",
+				humanBytes(float64(downloaded)), downloaded, used, speed+"/s",
+			)
+		}
 	}
 }
