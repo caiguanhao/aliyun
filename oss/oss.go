@@ -338,7 +338,7 @@ func init() {
 		fmt.Println()
 		fmt.Println("Built with key ID", KEY, MADE)
 		fmt.Println("API:", makeAPI())
-		fmt.Println("Source: https://github.com/caiguanhao/oss")
+		fmt.Println("Source: https://github.com/caiguanhao/aliyun")
 	}
 	flag.Parse()
 

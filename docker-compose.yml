@@ -1,35 +1,35 @@
 oss:
   image: golang:1.5.0
   command: ["go", "build"]
-  working_dir: '/go/src/github.com/caiguanhao/oss/oss'
+  working_dir: '/go/src/github.com/caiguanhao/aliyun/oss'
   environment:
     - API_PREFIX
     - BUCKET
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
-    - './oss:/go/src/github.com/caiguanhao/oss/oss'
+    - './oss:/go/src/github.com/caiguanhao/aliyun/oss'
 
 oss-diff:
   image: golang:1.5.0
   command: ["go", "build"]
-  working_dir: '/go/src/github.com/caiguanhao/oss/oss-diff'
+  working_dir: '/go/src/github.com/caiguanhao/aliyun/oss-diff'
   environment:
     - API_PREFIX
     - BUCKET
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
-    - './oss-diff:/go/src/github.com/caiguanhao/oss/oss-diff'
+    - './oss-diff:/go/src/github.com/caiguanhao/aliyun/oss-diff'
 
 oss-get:
   image: golang:1.5.0
   command: ["go", "build"]
-  working_dir: '/go/src/github.com/caiguanhao/oss/oss-get'
+  working_dir: '/go/src/github.com/caiguanhao/aliyun/oss-get'
   environment:
     - API_PREFIX
     - BUCKET
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
-    - './oss-get:/go/src/github.com/caiguanhao/oss/oss-get'
+    - './oss-get:/go/src/github.com/caiguanhao/aliyun/oss-get'

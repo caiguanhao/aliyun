@@ -1,9 +1,9 @@
-oss
-===
+aliyun
+======
 
-Command-line tool to use Aliyun's Open Storage Service ([OSS](http://www.aliyun.com/product/oss)).
+Command-line tool for [Aliyun Cloud Services](http://www.aliyun.com/product/).
 
-[![Circle CI](https://circleci.com/gh/caiguanhao/oss.svg?style=svg)](https://circleci.com/gh/caiguanhao/oss)
+[![Circle CI](https://circleci.com/gh/caiguanhao/aliyun.svg?style=svg)](https://circleci.com/gh/caiguanhao/aliyun)
 
 USAGE
 -----
@@ -30,7 +30,7 @@ Options:
 
 Built with key ID abcdefghijklmnop on 2015-08-19 11:08:01 (8b72aaf)
 API: https://my-bucket.oss-cn-hangzhou.aliyuncs.com
-Source: https://github.com/caiguanhao/oss
+Source: https://github.com/caiguanhao/aliyun
 ```
 
 To get list of different files:
@@ -51,16 +51,22 @@ Status code: 0 - local and remote are identical
              3 - both local and remote have different files
 ```
 
+To get a file from OSS:
+
+```help
+oss-get REMOTE-FILE LOCAL-FILE
+```
+
 BUILD
 -----
 
-Run `./build.sh` and then enter configs, key ID and secret to build `oss` and `oss-diff`.
+Run `./build.sh` and then enter configs, key ID and secret to start.
 
 If you are on Mac OS X and you want to build a Linux version,
-you can run `BUILD_DOCKER=1 ./build.sh` to build `oss` and `oss-diff` in a Docker container.
+you can run `BUILD_DOCKER=1 ./build.sh` to build in a Docker container.
 You need to install `boot2docker` and `docker-compose`.
 
-To continously build `oss`, you can also set environment variables:
+To continously build, you can also set environment variables:
 ```
 # store configs and keys in environment variables
 for v in API_PREFIX BUCKET; do printf "$v: " && read $v && export $v; done && \
