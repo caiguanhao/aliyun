@@ -8,6 +8,30 @@ Command-line tool for [Aliyun Cloud Services](http://www.aliyun.com/product/).
 USAGE
 -----
 
+ECS:
+
+```help
+Usage: ecs [OPTION] [ACTION] [TARGET]
+
+Using Access Key xxxxxxxxxxxxxxxx
+
+Action                Alias     Description
+list-instances        list      List all instances, show one if ID is specified
+list-images           images    List all images
+list-regions          regions   List all regions
+list-instance-types   types     List all instance types
+list-security-groups  groups    List all security groups
+create-instance       create    Create an instance
+allocate-public-ip    allocate  Allocate an IP address for an instance
+start-instance        start     Start an instance
+stop-instance         stop      Stop an instance
+restart-instance      restart   Restart an instance
+remove-instance       remove    Remove an instance
+update-instance       update    Update attributes of an instance
+hide-instance         hide      Hide instance from instance list
+unhide-instance       unhide    Un-hide instance from instance list
+```
+
 To upload files:
 
 ```help

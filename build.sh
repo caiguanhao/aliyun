@@ -2,7 +2,7 @@
 
 set -e
 
-PROJECTS="oss oss-diff oss-get"
+PROJECTS="ecs oss oss-diff oss-get"
 
 function str_to_array {
   eval "local input=\"\$$1\""
