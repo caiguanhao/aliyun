@@ -154,12 +154,14 @@ func main() {
 	api = makeAPI()
 	if !useSTDIN {
 		info, err := os.Stat(local)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return
-		}
-		if info.IsDir() {
-			local = path.Join(local, path.Base(remote))
+		if !os.IsNotExist(err) {
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
+			if info.IsDir() {
+				local = path.Join(local, path.Base(remote))
+			}
 		}
 	}
 	if curlScript {
