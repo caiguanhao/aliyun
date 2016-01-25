@@ -4,9 +4,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -56,38 +58,36 @@ func makeAPI() string {
 	return api
 }
 
-func download() (int64, error) {
-	to := local
-	info, err := os.Stat(to)
-	if err != nil {
-		return 0, err
-	}
-
-	if info.IsDir() {
-		to = path.Join(to, path.Base(remote))
-	}
-
-	resp, err := get(remote)
+func download(to string) (written int64, err error) {
+	var resp *http.Response
+	resp, err = get(remote)
 	defer resp.Body.Close()
 	if err != nil {
-		return 0, err
+		return
 	}
 
-	file, err := os.Create(to)
+	if resp.StatusCode != 200 {
+		var body []byte
+		body, err = ioutil.ReadAll(resp.Body)
+		if err == nil {
+			err = errors.New(string(body))
+		}
+		return
+	}
+
+	if useSTDIN {
+		written, err = io.Copy(os.Stdout, resp.Body)
+		return
+	}
+
+	var file *os.File
+	file, err = os.Create(to)
 	defer file.Close()
-	if err != nil {
-		return 0, err
+	if err == nil {
+		fmt.Printf("Downloading %s to %s ...\n", remote, to)
+		written, err = io.Copy(file, resp.Body)
 	}
-
-	fmt.Printf("Downloading %s to %s ...\n", remote, to)
-
-	n, err := io.Copy(file, resp.Body)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return n, nil
+	return
 }
 
 func fmtFloat(float float64, suffix string) string {
@@ -119,13 +119,14 @@ func humanBytes(bytes float64) string {
 }
 
 var curlScript bool
+var useSTDIN bool
 
 func init() {
 	flag.BoolVar(&curlScript, "curl", false, "")
 	flag.Usage = func() {
-		fmt.Println("oss-get [--curl] REMOTE-FILE LOCAL-FILE")
+		fmt.Println("oss-get [--curl] REMOTE-FILE [LOCAL-FILE]")
 		fmt.Println()
-		fmt.Println("  --curl   generate curl script")
+		fmt.Println("    --curl    generate curl script")
 	}
 	flag.Parse()
 }
@@ -133,36 +134,56 @@ func init() {
 func main() {
 	timeStart := time.Now()
 
-	l := len(flag.Args())
-	if l != 2 {
-		fmt.Println("Error: Please specify remote file and local file location.")
+	l := flag.NArg()
+	if l < 1 {
+		fmt.Fprintln(os.Stderr, "Error: Please specify remote file location.")
 		return
 	}
-	remote = flag.Args()[0]
-	local = flag.Args()[1]
+	if l > 2 {
+		fmt.Fprintln(os.Stderr, "Error: Please specify one remote file and one local file location.")
+		return
+	}
+	remote = flag.Arg(0)
+	if l == 1 {
+		useSTDIN = true
+	} else if l == 2 {
+		local = flag.Arg(1)
+	}
 	apiPrefix = DEFAULT_API_PREFIX
 	bucket = DEFAULT_BUCKET
 	api = makeAPI()
+	if !useSTDIN {
+		info, err := os.Stat(local)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		if info.IsDir() {
+			local = path.Join(local, path.Base(remote))
+		}
+	}
 	if curlScript {
 		uri := strings.TrimLeft(remote, "/")
 		date := time.Now().Unix() + 3600
 		signature := sign(fmt.Sprintf("%d", date), remote)
-		fmt.Printf("curl -#o '%s' '%s/%s?OSSAccessKeyId=%s&Expires=%d&Signature=%s'\n",
-			path.Base(remote), api, url.QueryEscape(uri), KEY, date, url.QueryEscape(signature))
+		var output string
+		if !useSTDIN {
+			output = fmt.Sprintf("-o '%s' ", local)
+		}
+		fmt.Printf("curl %s'%s/%s?OSSAccessKeyId=%s&Expires=%d&Signature=%s'\n",
+			output, api, url.QueryEscape(uri), KEY, date, url.QueryEscape(signature))
 	} else {
-		downloaded, err := download()
+		downloaded, err := download(local)
 		if err != nil {
-			fmt.Println(err)
-			return
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		}
 		if downloaded > 0 {
 			since := time.Since(timeStart)
 			speed := humanBytes(float64(downloaded) / since.Seconds())
 			used := regexp.MustCompile("(\\.[0-9]{3})[0-9]+").ReplaceAllString(since.String(), "$1")
-			fmt.Printf(
-				"transferred: %s (%d bytes)  time used: %s  avg. speed: %s\n",
-				humanBytes(float64(downloaded)), downloaded, used, speed+"/s",
-			)
+			fmt.Fprintf(os.Stderr, "transferred: %s (%d bytes)  time used: %s  avg. speed: %s/s\n",
+				humanBytes(float64(downloaded)), downloaded, used, speed)
 		}
 	}
 }
