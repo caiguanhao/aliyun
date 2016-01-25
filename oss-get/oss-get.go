@@ -34,7 +34,7 @@ func get(remotePath string) (*http.Response, error) {
 	if reqErr != nil {
 		return nil, reqErr
 	}
-	date := time.Now().UTC().Format(time.RFC1123)
+	date := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT") // don't use time.RFC1123
 	signature := sign(date, remotePath)
 	auth := fmt.Sprintf("OSS %s:%s", KEY, signature)
 	req.Header.Set("Authorization", auth)
