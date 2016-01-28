@@ -2,7 +2,9 @@
 
 set -e
 
-PROJECTS="ecs oss oss-diff oss-get"
+if test -z "$PROJECTS"; then
+  PROJECTS="ecs oss oss-diff oss-get"
+fi
 
 function str_to_array {
   eval "local input=\"\$$1\""
@@ -85,7 +87,7 @@ for project in $PROJECTS; do
   echo "Building $project ..."
   cd "$__DIR__/$project"
   update_access_key
-  if test -n "$BUILD_DOCKER"; then
+  if test -n "$BUILD_DOCKER" && test "$BUILD_DOCKER" -eq 1; then
     docker-compose up $project
     docker-compose rm --force -v
   else
