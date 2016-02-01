@@ -150,37 +150,37 @@ func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
 func (ecs *ECS) Do(task string, target *ECSInterface) bool {
 	var err error
 	switch task {
-	case "list", "list-instances":
+	case "l", "list", "list-instances":
 		if flag.Arg(1) != "" {
 			*target, err = (&DescribeInstanceAttribute{}).Do(ecs)
 		} else {
 			*target, err = (&DescribeInstances{}).Do(ecs)
 		}
-	case "images", "list-images":
+	case "i", "images", "list-images":
 		*target, err = (&DescribeImages{}).Do(ecs)
-	case "regions", "list-regions":
+	case "n", "regions", "list-regions":
 		*target, err = (&DescribeRegions{}).Do(ecs)
-	case "types", "list-instance-types":
+	case "t", "types", "list-instance-types":
 		*target, err = (&DescribeInstanceTypes{}).Do(ecs)
-	case "groups", "list-security-groups":
+	case "g", "groups", "list-security-groups":
 		*target, err = (&DescribeSecurityGroups{}).Do(ecs)
-	case "create", "create-instance":
+	case "c", "create", "create-instance":
 		*target, err = (&CreateInstance{}).Do(ecs)
-	case "allocate", "allocate-public-ip":
+	case "a", "allocate", "allocate-public-ip":
 		*target, err = (&AllocatePublicIP{}).Do(ecs)
-	case "start", "start-instance":
+	case "s", "start", "start-instance":
 		*target, err = (&StartInstance{}).Do(ecs)
-	case "stop", "stop-instance":
+	case "k", "stop", "stop-instance":
 		*target, err = (&StopInstance{}).Do(ecs)
-	case "restart", "restart-instance":
+	case "r", "restart", "restart-instance":
 		*target, err = (&RestartInstance{}).Do(ecs)
-	case "remove", "remove-instance":
+	case "d", "remove", "remove-instance":
 		*target, err = (&RemoveInstance{}).Do(ecs)
-	case "update", "update-instance":
+	case "e", "update", "update-instance":
 		*target, err = (&ModifyInstanceAttribute{}).Do(ecs)
-	case "hide", "hide-instance":
+	case "h", "hide", "hide-instance":
 		*target, err = (&ModifyInstanceAttribute{}).HideInstance(ecs, true)
-	case "unhide", "unhide-instance":
+	case "u", "unhide", "unhide-instance":
 		*target, err = (&ModifyInstanceAttribute{}).HideInstance(ecs, false)
 	default:
 		return false

@@ -10,20 +10,20 @@ import (
 )
 
 var ACTIONS = [][]string{
-	{"list-instances", "list", "List all instances, show one if ID is specified"},
-	{"list-images", "images", "List all images"},
-	{"list-regions", "regions", "List all regions"},
-	{"list-instance-types", "types", "List all instance types"},
-	{"list-security-groups", "groups", "List all security groups"},
-	{"create-instance", "create", "Create an instance"},
-	{"allocate-public-ip", "allocate", "Allocate an IP address for an instance"},
-	{"start-instance", "start", "Start an instance"},
-	{"stop-instance", "stop", "Stop an instance"},
-	{"restart-instance", "restart", "Restart an instance"},
-	{"remove-instance", "remove", "Remove an instance"},
-	{"update-instance", "update", "Update attributes of an instance"},
-	{"hide-instance", "hide", "Hide instance from instance list"},
-	{"unhide-instance", "unhide", "Un-hide instance from instance list"},
+	{"list-instances", "list", "l", "List all instances, show one if ID is specified"},
+	{"list-images", "images", "i", "List all images"},
+	{"list-regions", "regions", "n", "List all regions"},
+	{"list-instance-types", "types", "t", "List all instance types"},
+	{"list-security-groups", "groups", "g", "List all security groups"},
+	{"create-instance", "create", "c", "Create an instance"},
+	{"allocate-public-ip", "allocate", "a", "Allocate an IP address for an instance"},
+	{"start-instance", "start", "s", "Start an instance"},
+	{"stop-instance", "stop", "k", "Stop an instance"},
+	{"restart-instance", "restart", "r", "Restart an instance"},
+	{"remove-instance", "remove", "d", "Remove an instance"},
+	{"update-instance", "update", "e", "Update attributes of an instance"},
+	{"hide-instance", "hide", "h", "Hide instance from instance list"},
+	{"unhide-instance", "unhide", "u", "Un-hide instance from instance list"},
 }
 
 func init() {
@@ -62,14 +62,13 @@ func init() {
 			}
 			return
 		}
-		const format = "%-20s  %-8s  %s\n"
 		fmt.Printf("Usage: %s [OPTION] [ACTION] [TARGET]\n", path.Base(os.Args[0]))
 		fmt.Println()
 		fmt.Printf("Using Access Key %s\n", KEY)
 		fmt.Println()
-		fmt.Printf(format, "Action", "Alias", "Description")
+		fmt.Printf("%-20s  %-11s  %s\n", "Action", "Alias", "Description")
 		for _, action := range ACTIONS {
-			fmt.Printf(format, action[0], action[1], action[2])
+			fmt.Printf("%-20s  %-1s, %-8s  %s\n", action[0], action[2], action[1], action[3])
 		}
 	}
 	flag.Parse()
