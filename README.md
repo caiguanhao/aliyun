@@ -11,25 +11,35 @@ USAGE
 ECS:
 
 ```help
-Usage: ecs [OPTION] [ACTION] [TARGET]
+NAME:
+   ecs - control Aliyun ECS instances
 
-Using Access Key xxxxxxxxxxxxxxxx
+USAGE:
+   ecs [global options] command [command options] [arguments...]
 
-Action                Alias        Description
-list-instances        l, list      List all instances, show one if ID is specified
-list-images           i, images    List all images
-list-regions          n, regions   List all regions
-list-instance-types   t, types     List all instance types
-list-security-groups  g, groups    List all security groups
-create-instance       c, create    Create an instance
-allocate-public-ip    a, allocate  Allocate an IP address for an instance
-start-instance        s, start     Start an instance
-stop-instance         k, stop      Stop an instance
-restart-instance      r, restart   Restart an instance
-remove-instance       d, remove    Remove an instance
-update-instance       e, update    Update attributes of an instance
-hide-instance         h, hide      Hide instance from instance list
-unhide-instance       u, unhide    Un-hide instance from instance list
+VERSION:
+   1.0.0
+
+COMMANDS:
+   list-instances, list, l		list all ECS instances of all regions
+   list-images, images, i		show info of all images
+   list-regions, regions, n		list all available regions
+   list-instance-types, types, t	list all instance types
+   list-security-groups, groups, g	list all security groups
+   create-instance, create, c		create an instance
+   allocate-public-ip, allocate, a	allocate an IP address for an instance
+   start-instance, start, s		start an instance
+   stop-instance, stop, k		stop an instance
+   restart-instance, restart, r		restart an instance
+   remove-instance, remove, d		remove an instance
+   update-instance, update, e		update attributes of an instance
+   hide-instance, hide, h		hide instance from instance list
+   unhide-instance, unhide, u		un-hide instance from instance list
+
+GLOBAL OPTIONS:
+   --quiet, -q		show only name or ID
+   --verbose, -V	show more info
+   --version, -v	print the version
 ```
 
 To upload files:

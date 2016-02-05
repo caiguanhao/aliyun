@@ -1,22 +1,10 @@
 package main
 
 import (
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha1"
-	"encoding/base64"
-	"encoding/json"
-	"flag"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
 	"os"
-	"sort"
-	"strings"
-	"time"
+	"path"
 
-	"github.com/caiguanhao/aliyun/ecs/opts"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 type ECS struct {
@@ -24,170 +12,44 @@ type ECS struct {
 	SECRET string
 }
 
-type ECSInterface interface {
-	Print()
-	PrintTable()
-}
+var ECS_INSTANCE ECS = ECS{KEY: KEY, SECRET: SECRET}
 
-func sign(secret string, query string) string {
-	mac := hmac.New(sha1.New, []byte(secret+"&"))
-	mac.Write([]byte("GET&%2F&" + query))
-	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
-}
+var IsQuiet bool
+var IsVerbose bool
 
-func randomString(n int) string {
-	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	var bytes = make([]byte, n)
-	rand.Read(bytes)
-	for i, b := range bytes {
-		bytes[i] = alphanum[b%byte(len(alphanum))]
+func main() {
+	app := cli.NewApp()
+	app.Name = path.Base(os.Args[0])
+	app.Version = "1.0.0"
+	app.Usage = "control Aliyun ECS instances"
+	app.HideHelp = true
+	app.Commands = []cli.Command{
+		DESCRIBE_INSTANCES,
+		DESCRIBE_IMAGES,
+		DESCRIBE_REGIONS,
+		DESCRIBE_INSTANCE_TYPES,
+		DESCRIBE_SECURITY_GROUPS,
+		CREATE_INSTANCE,
+		ALLOCATE_PUBLIC_IP_ADDRESS,
+		START_INSTANCE,
+		STOP_INSTANCE,
+		RESTART_INSTANCE,
+		REMOVE_INSTANCE,
+		UPDATE_INSTANCE,
+		HIDE_INSTANCE,
+		UNHIDE_INSTANCE,
 	}
-	return string(bytes)
-}
-
-func urlEncode(input string) string {
-	return strings.Replace(url.QueryEscape(input), "+", "%20", -1)
-}
-
-func buildQueryString(input map[string]string) string {
-	keys := make([]string, 0, len(input))
-	for val := range input {
-		keys = append(keys, val)
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:        "quiet, q",
+			Usage:       "show only name or ID",
+			Destination: &IsQuiet,
+		},
+		cli.BoolFlag{
+			Name:        "verbose, V",
+			Usage:       "show more info",
+			Destination: &IsVerbose,
+		},
 	}
-	sort.Strings(keys)
-	queries := make([]string, 0, len(input))
-	for _, key := range keys {
-		query := fmt.Sprintf("%s=%s", urlEncode(key), urlEncode(input[key]))
-		queries = append(queries, query)
-	}
-	queryString := strings.Join(queries, "&")
-	return queryString
-}
-
-func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
-	params := map[string]string{
-		"Format":           "JSON",
-		"Version":          "2014-05-26",
-		"AccessKeyId":      ecs.KEY,
-		"SignatureMethod":  "HMAC-SHA1",
-		"SignatureVersion": "1.0",
-		"SignatureNonce":   randomString(64),
-		"Timestamp":        time.Now().UTC().Format("2006-01-02T15:04:05Z"),
-		"PageSize":         "50",
-		"PageNumber":       "1",
-	}
-	for k, v := range queries {
-		params[k] = v
-	}
-	query := buildQueryString(params)
-	signature := sign(ecs.SECRET, urlEncode(query))
-	url := fmt.Sprintf("http://ecs.aliyuncs.com/?%s&Signature=%s", query, urlEncode(signature))
-
-	if opts.IsVerbose {
-		fmt.Println(url)
-	}
-
-	res, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if opts.IsVerbose {
-		fmt.Printf("%s %s\n", res.Proto, res.Status)
-		for key, values := range res.Header {
-			for _, value := range values {
-				fmt.Printf("%s: %s\n", key, value)
-			}
-		}
-		body, ioerr := ioutil.ReadAll(res.Body)
-		if ioerr != nil {
-			return ioerr
-		}
-		if res.StatusCode == 200 {
-			err = json.Unmarshal(body, target)
-		} else {
-			errResp := ECSResponseError{}
-			err = json.Unmarshal(body, &errResp)
-			if err != nil {
-				return err
-			}
-			pretty, jsonerr := json.MarshalIndent(&errResp, "", "  ")
-			if jsonerr != nil {
-				fmt.Printf("%s\n", body)
-			} else {
-				fmt.Printf("%s\n", pretty)
-			}
-			return &errResp
-		}
-		if err != nil {
-			fmt.Printf("%s\n", body)
-		} else {
-			pretty, jsonerr := json.MarshalIndent(target, "", "  ")
-			if jsonerr != nil {
-				fmt.Printf("%s\n", body)
-			} else {
-				fmt.Printf("%s\n", pretty)
-			}
-		}
-	} else {
-		if res.StatusCode == 200 {
-			err = json.NewDecoder(res.Body).Decode(target)
-		} else {
-			errResp := ECSResponseError{}
-			err = json.NewDecoder(res.Body).Decode(&errResp)
-			if err != nil {
-				return err
-			}
-			return &errResp
-		}
-	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ecs *ECS) Do(task string, target *ECSInterface) bool {
-	var err error
-	switch task {
-	case "l", "list", "list-instances":
-		if flag.Arg(1) != "" {
-			*target, err = (&DescribeInstanceAttribute{}).Do(ecs)
-		} else {
-			*target, err = (&DescribeInstances{}).Do(ecs)
-		}
-	case "i", "images", "list-images":
-		*target, err = (&DescribeImages{}).Do(ecs)
-	case "n", "regions", "list-regions":
-		*target, err = (&DescribeRegions{}).Do(ecs)
-	case "t", "types", "list-instance-types":
-		*target, err = (&DescribeInstanceTypes{}).Do(ecs)
-	case "g", "groups", "list-security-groups":
-		*target, err = (&DescribeSecurityGroups{}).Do(ecs)
-	case "c", "create", "create-instance":
-		*target, err = (&CreateInstance{}).Do(ecs)
-	case "a", "allocate", "allocate-public-ip":
-		*target, err = (&AllocatePublicIP{}).Do(ecs)
-	case "s", "start", "start-instance":
-		*target, err = (&StartInstance{}).Do(ecs)
-	case "k", "stop", "stop-instance":
-		*target, err = (&StopInstance{}).Do(ecs)
-	case "r", "restart", "restart-instance":
-		*target, err = (&RestartInstance{}).Do(ecs)
-	case "d", "remove", "remove-instance":
-		*target, err = (&RemoveInstance{}).Do(ecs)
-	case "e", "update", "update-instance":
-		*target, err = (&ModifyInstanceAttribute{}).Do(ecs)
-	case "h", "hide", "hide-instance":
-		*target, err = (&ModifyInstanceAttribute{}).HideInstance(ecs, true)
-	case "u", "unhide", "unhide-instance":
-		*target, err = (&ModifyInstanceAttribute{}).HideInstance(ecs, false)
-	default:
-		return false
-	}
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	return true
+	app.Run(os.Args)
 }

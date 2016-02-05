@@ -5,54 +5,84 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/caiguanhao/aliyun/ecs/opts"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 type ModifyInstanceAttribute struct {
 	RequestId string `json:"RequestId"`
 }
 
-func (modify ModifyInstanceAttribute) HideInstance(ecs *ECS, hide bool) (*ModifyInstanceAttribute, error) {
-	id, err := opts.GetInstanceId()
-	if err != nil {
-		return nil, err
+var UPDATE_INSTANCE cli.Command = cli.Command{
+	Name:    "update-instance",
+	Aliases: []string{"update", "e"},
+	Usage:   "update attributes of an instance",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "name, n",
+			Usage: "new name of the instance",
+		},
+		cli.StringFlag{
+			Name:  "description, d",
+			Usage: "new description of the instance",
+		},
+	},
+	Action: func(c *cli.Context) {
+		params := map[string]string{}
+		if c.IsSet("name") {
+			params["InstanceName"] = c.String("name")
+		}
+		if c.IsSet("description") {
+			params["Description"] = c.String("description")
+		}
+		Print(ECS_INSTANCE.ModifyInstanceAttributeById(c.Args().Get(0), params))
+	},
+}
+
+var HIDE_INSTANCE cli.Command = cli.Command{
+	Name:    "hide-instance",
+	Aliases: []string{"hide", "h"},
+	Usage:   "hide instance from instance list",
+	Action: func(c *cli.Context) {
+		Print(ECS_INSTANCE.HideInstanceById(c.Args().Get(0), true))
+	},
+}
+
+var UNHIDE_INSTANCE cli.Command = cli.Command{
+	Name:    "unhide-instance",
+	Aliases: []string{"unhide", "u"},
+	Usage:   "un-hide instance from instance list",
+	Action: func(c *cli.Context) {
+		Print(ECS_INSTANCE.HideInstanceById(c.Args().Get(0), false))
+	},
+}
+
+func (ecs *ECS) ModifyInstanceAttributeById(id string, _params map[string]string) (modify ModifyInstanceAttribute, _ error) {
+	params := map[string]string{
+		"Action":     "ModifyInstanceAttribute",
+		"InstanceId": id,
 	}
-	var instance DescribeInstanceAttribute
-	err = instance.DescribeInstanceAttributeById(ecs, id)
+	for k, v := range _params {
+		params[k] = v
+	}
+	if len(params) > 2 {
+		return modify, ecs.Request(params, &modify)
+	}
+	return modify, errors.New("Please provide at least one: --name, --description.")
+}
+
+func (ecs *ECS) HideInstanceById(id string, hide bool) (modify ModifyInstanceAttribute, _ error) {
+	instance, err := ecs.DescribeInstanceAttributeById(id)
 	if err != nil {
-		return nil, err
+		return modify, err
 	}
 	description := strings.Replace(instance.Description, "[HIDE]", "", -1)
 	if hide {
 		description = "[HIDE] " + description
 	}
 	description = strings.TrimSpace(description)
-	return &modify, ecs.Request(map[string]string{
-		"Action":      "ModifyInstanceAttribute",
-		"InstanceId":  id,
+	return ecs.ModifyInstanceAttributeById(id, map[string]string{
 		"Description": description,
-	}, &modify)
-}
-
-func (modify *ModifyInstanceAttribute) Do(ecs *ECS) (*ModifyInstanceAttribute, error) {
-	id, err := opts.GetInstanceId()
-	if err != nil {
-		return nil, err
-	}
-	params := map[string]string{
-		"Action":     "ModifyInstanceAttribute",
-		"InstanceId": id,
-	}
-	if opts.Description != "\x00" {
-		params["Description"] = opts.Description
-	}
-	if opts.InstanceName != "" {
-		params["InstanceName"] = opts.InstanceName
-	}
-	if len(params) > 2 {
-		return modify, ecs.Request(params, modify)
-	}
-	return nil, errors.New("Please provide at least one: --name, --description.")
+	})
 }
 
 func (modify ModifyInstanceAttribute) Print() {

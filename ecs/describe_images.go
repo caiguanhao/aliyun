@@ -1,11 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
-	"github.com/caiguanhao/aliyun/ecs/opts"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 type ECSImage struct {
@@ -29,9 +28,18 @@ type ECSImage struct {
 	Size            int64  `json:"Size"`
 }
 
+var DESCRIBE_IMAGES cli.Command = cli.Command{
+	Name:    "list-images",
+	Aliases: []string{"images", "i"},
+	Usage:   "show info of all images",
+	Action: func(c *cli.Context) {
+		Print(ECS_INSTANCE.DescribeImages())
+	},
+}
+
 type DescribeImages struct {
 	Images struct {
-		Image []ECSImage `json:"Image"`
+		Image ECSImages `json:"Image"`
 	} `json:"Images"`
 	PageNumber int64  `json:"PageNumber"`
 	PageSize   int64  `json:"PageSize"`
@@ -40,58 +48,38 @@ type DescribeImages struct {
 	TotalCount int64  `json:"TotalCount"`
 }
 
-type byImagesId []ECSImage
+type ECSImages []ECSImage
 
-func (a byImagesId) Len() int           { return len(a) }
-func (a byImagesId) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byImagesId) Less(i, j int) bool { return a[i].ImageId < a[j].ImageId }
+func (a ECSImages) Len() int           { return len(a) }
+func (a ECSImages) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ECSImages) Less(i, j int) bool { return a[i].ImageId < a[j].ImageId }
 
-func (images *DescribeImages) Do(ecs *ECS) (*DescribeImages, error) {
-	if len(opts.Region) < 1 {
-		if opts.IsQuiet {
-			return images, nil
-		}
-		return nil, errors.New("Please provide a --region.")
-	}
-	return images, ecs.Request(map[string]string{
+func (ecs *ECS) DescribeImages() (_ ECSImages, resp DescribeImages, _ error) {
+	return resp.Images.Image, resp, ecs.Request(map[string]string{
 		"Action":   "DescribeImages",
-		"RegionId": opts.Region,
-	}, images)
+		"RegionId": "",
+	}, &resp)
 }
 
-func (images DescribeImages) Print() {
-	sort.Sort(byImagesId(images.Images.Image))
-	for _, image := range images.Images.Image {
+func (images ECSImages) Print() {
+	sort.Sort(images)
+	for _, image := range images {
 		fmt.Println(image.ImageId)
 	}
 }
 
-func (images DescribeImages) PrintTable() {
-	idMaxLength := 2
-	ownerMaxLength := 3
-	for _, image := range images.Images.Image {
-		idLength := len(image.ImageId)
-		ownerLength := len(image.ImageOwnerAlias)
-		if idLength > idMaxLength {
-			idMaxLength = idLength
-		}
-		if ownerLength > ownerMaxLength {
-			ownerMaxLength = ownerLength
-		}
-	}
-	format := fmt.Sprintf("%%-%ds  %%-%ds  %%s\n", idMaxLength, ownerMaxLength)
-	sort.Sort(byImagesId(images.Images.Image))
-	fmt.Printf(format, "ID", "Owner", "Name")
-	for _, image := range images.Images.Image {
+func (images ECSImages) PrintTable() {
+	fields := []interface{}{"ID", "Owner", "Name"}
+	PrintTable(fields, len(images), func(i int) []interface{} {
+		image := images[i]
 		name := image.ImageName
 		if name == image.ImageId {
-			name = ""
+			name = "-"
 		}
-		fmt.Printf(
-			format,
+		return []interface{}{
 			image.ImageId,
 			image.ImageOwnerAlias,
 			name,
-		)
-	}
+		}
+	})
 }

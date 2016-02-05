@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
-
-	"github.com/caiguanhao/aliyun/ecs/opts"
 )
+
+type ECSInstance DescribeInstanceAttribute
 
 type DescribeInstanceAttributeIPAddress struct {
 	IpAddress []string `json:"IpAddress"`
@@ -60,39 +59,18 @@ type DescribeInstanceAttribute struct {
 	ZoneId string `json:"ZoneId"`
 }
 
-func (instance DescribeInstanceAttribute) ShouldHide() bool {
-	if opts.ShowAll {
-		return false
-	} else {
-		isHidden := strings.Contains(instance.Description, "[HIDE]")
-		if opts.ShowOnlyHidden {
-			return !isHidden
-		} else {
-			return isHidden
-		}
-	}
-}
-
-func (instance *DescribeInstanceAttribute) DescribeInstanceAttributeById(ecs *ECS, id string) error {
-	return ecs.Request(map[string]string{
+func (ecs *ECS) DescribeInstanceAttributeById(id string) (instance ECSInstance, err error) {
+	return instance, ecs.Request(map[string]string{
 		"Action":     "DescribeInstanceAttribute",
 		"InstanceId": id,
-	}, instance)
+	}, &instance)
 }
 
-func (instance *DescribeInstanceAttribute) Do(ecs *ECS) (*DescribeInstanceAttribute, error) {
-	if id, err := opts.GetInstanceId(); err == nil {
-		return instance, instance.DescribeInstanceAttributeById(ecs, id)
-	} else {
-		return nil, err
-	}
-}
-
-func (instance DescribeInstanceAttribute) Print() {
+func (instance ECSInstance) Print() {
 	fmt.Println(instance.InstanceId)
 }
 
-func (instance DescribeInstanceAttribute) PrintTable() {
+func (instance ECSInstance) PrintTable() {
 	const format = "%15s: %s\n"
 	createdAt, _ := time.Parse(time.RFC3339, instance.CreationTime)
 	duration := time.Since(createdAt)

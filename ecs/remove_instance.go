@@ -3,22 +3,27 @@ package main
 import (
 	"fmt"
 
-	"github.com/caiguanhao/aliyun/ecs/opts"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 type RemoveInstance struct {
 	RequestId string `json:"RequestId"`
 }
 
-func (remove *RemoveInstance) Do(ecs *ECS) (*RemoveInstance, error) {
-	if id, err := opts.GetInstanceId(); err == nil {
-		return remove, ecs.Request(map[string]string{
-			"Action":     "DeleteInstance",
-			"InstanceId": id,
-		}, remove)
-	} else {
-		return nil, err
-	}
+var REMOVE_INSTANCE cli.Command = cli.Command{
+	Name:    "remove-instance",
+	Aliases: []string{"remove", "d"},
+	Usage:   "remove an instance",
+	Action: func(c *cli.Context) {
+		Print(ECS_INSTANCE.RemoveInstanceById(c.Args().Get(0)))
+	},
+}
+
+func (ecs *ECS) RemoveInstanceById(id string) (remove RemoveInstance, _ error) {
+	return remove, ecs.Request(map[string]string{
+		"Action":     "DeleteInstance",
+		"InstanceId": id,
+	}, &remove)
 }
 
 func (remove RemoveInstance) Print() {

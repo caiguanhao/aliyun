@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sort"
+
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 type ECSInstanceType struct {
@@ -11,18 +13,27 @@ type ECSInstanceType struct {
 	MemorySize     float64 `json:"MemorySize"`
 }
 
+var DESCRIBE_INSTANCE_TYPES cli.Command = cli.Command{
+	Name:    "list-instance-types",
+	Aliases: []string{"types", "t"},
+	Usage:   "list all instance types",
+	Action: func(c *cli.Context) {
+		Print(ECS_INSTANCE.DescribeInstanceTypes())
+	},
+}
+
 type DescribeInstanceTypes struct {
 	InstanceTypes struct {
-		InstanceType []ECSInstanceType `json:"InstanceType"`
+		InstanceType ECSInstanceTypes `json:"InstanceType"`
 	} `json:"InstanceTypes"`
 	RequestId string `json:"RequestId"`
 }
 
-type byCPUCoreThenMemorySize []ECSInstanceType
+type ECSInstanceTypes []ECSInstanceType
 
-func (a byCPUCoreThenMemorySize) Len() int      { return len(a) }
-func (a byCPUCoreThenMemorySize) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a byCPUCoreThenMemorySize) Less(i, j int) bool {
+func (a ECSInstanceTypes) Len() int      { return len(a) }
+func (a ECSInstanceTypes) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ECSInstanceTypes) Less(i, j int) bool {
 	if a[i].CpuCoreCount < a[j].CpuCoreCount {
 		return true
 	} else if a[i].CpuCoreCount > a[j].CpuCoreCount {
@@ -33,35 +44,27 @@ func (a byCPUCoreThenMemorySize) Less(i, j int) bool {
 	return false
 }
 
-func (types *DescribeInstanceTypes) Do(ecs *ECS) (*DescribeInstanceTypes, error) {
-	return types, ecs.Request(map[string]string{
+func (ecs *ECS) DescribeInstanceTypes() (_ ECSInstanceTypes, resp DescribeInstanceTypes, _ error) {
+	return resp.InstanceTypes.InstanceType, resp, ecs.Request(map[string]string{
 		"Action": "DescribeInstanceTypes",
-	}, types)
+	}, &resp)
 }
 
-func (types DescribeInstanceTypes) Print() {
-	for _, itype := range types.InstanceTypes.InstanceType {
+func (types ECSInstanceTypes) Print() {
+	for _, itype := range types {
 		fmt.Println(itype.InstanceTypeId)
 	}
 }
 
-func (types DescribeInstanceTypes) PrintTable() {
-	sort.Sort(byCPUCoreThenMemorySize(types.InstanceTypes.InstanceType))
-	idMaxLength := 4
-	for _, itype := range types.InstanceTypes.InstanceType {
-		idLength := len(itype.InstanceTypeId)
-		if idLength > idMaxLength {
-			idMaxLength = idLength
-		}
-	}
-	format := fmt.Sprintf("%%-%ds  %%-8s  %%-6s\n", idMaxLength)
-	fmt.Printf(format, "Name", "CPU Core", "Memory")
-	for _, itype := range types.InstanceTypes.InstanceType {
-		fmt.Printf(
-			format,
+func (types ECSInstanceTypes) PrintTable() {
+	sort.Sort(types)
+	fields := []interface{}{"Name", "CPU Core", "Memory"}
+	PrintTable(fields, len(types), func(i int) []interface{} {
+		itype := types[i]
+		return []interface{}{
 			itype.InstanceTypeId,
 			fmt.Sprintf("%d", itype.CpuCoreCount),
 			fmt.Sprintf("%.1f G", itype.MemorySize),
-		)
-	}
+		}
+	})
 }

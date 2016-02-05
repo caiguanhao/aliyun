@@ -1,17 +1,19 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
-	"github.com/caiguanhao/aliyun/ecs/opts"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
+
+type ECSInstances []ECSInstance
 
 type DescribeInstances struct {
 	Instances struct {
-		Instance []DescribeInstanceAttribute `json:"Instance"`
+		Instance ECSInstances `json:"Instance"`
 	} `json:"Instances"`
 	PageNumber int64  `json:"PageNumber"`
 	PageSize   int64  `json:"PageSize"`
@@ -19,80 +21,96 @@ type DescribeInstances struct {
 	TotalCount int64  `json:"TotalCount"`
 }
 
-func (instances *DescribeInstances) Do(ecs *ECS) (*DescribeInstances, error) {
-	if len(opts.Region) < 1 {
-		if opts.IsQuiet {
-			return instances, nil
-		}
-		return nil, errors.New("Please provide a --region.")
-	}
-	return instances, ecs.Request(map[string]string{
-		"Action":   "DescribeInstances",
-		"RegionId": opts.Region,
-	}, instances)
-}
+var showAll bool
+var showHiddenOnly bool
 
-func (instances DescribeInstances) Print() {
-	for _, instance := range instances.Instances.Instance {
-		if instance.ShouldHide() {
-			continue
-		}
-		if opts.PrintNameAndId {
-			fmt.Printf("%s:%s\n", instance.InstanceName, instance.InstanceId)
-		} else if opts.PrintName {
-			fmt.Println(instance.InstanceName)
+var DESCRIBE_INSTANCES cli.Command = cli.Command{
+	Name:    "list-instances",
+	Aliases: []string{"list", "l"},
+	Usage:   "list all ECS instances of all regions",
+	Flags: []cli.Flag{
+		cli.BoolFlag{
+			Name:        "all, a",
+			Usage:       "also show hidden instances, overrides --hidden-only",
+			Destination: &showAll,
+		},
+		cli.BoolFlag{
+			Name:        "hidden-only, H",
+			Usage:       "show only hidden instances",
+			Destination: &showHiddenOnly,
+		},
+	},
+	Action: func(c *cli.Context) {
+		id := c.Args().Get(0)
+		if id == "" {
+			Print(ECS_INSTANCE.DescribeInstances())
 		} else {
-			fmt.Println(instance.InstanceId)
+			Print(ECS_INSTANCE.DescribeInstanceAttributeById(id))
 		}
+	},
+}
+
+func (ecs *ECS) DescribeInstances() (instances ECSInstances, err error) {
+	err = ForAllRegionsDo(func(region string) (err error) {
+		var resp DescribeInstances
+		err = ecs.Request(map[string]string{
+			"Action":   "DescribeInstances",
+			"RegionId": region,
+		}, &resp)
+		if err == nil {
+			instances = append(instances, resp.Instances.Instance...)
+		}
+		return
+	})
+	return
+}
+
+func (instances ECSInstances) Print() {
+	for _, instance := range instances {
+		if !shouldShow(instance) {
+			continue
+		}
+		fmt.Println(instance.InstanceId)
 	}
 }
 
-func (instances DescribeInstances) PrintTable() {
-	idMaxLength := 2
-	nameMaxLength := 4
-	statusMaxLength := 6
-	for _, instance := range instances.Instances.Instance {
-		if instance.ShouldHide() {
-			continue
+func (instances ECSInstances) PrintTable() {
+	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", "Type", "Region", "Created At"}
+	PrintTable(fields, len(instances), func(i int) []interface{} {
+		instance := instances[i]
+		if !shouldShow(instance) {
+			return nil
 		}
-		idLength := len(instance.InstanceId)
-		nameLength := len(instance.InstanceName)
-		statusLength := len(instance.Status)
-		if idLength > idMaxLength {
-			idMaxLength = idLength
-		}
-		if nameLength > nameMaxLength {
-			nameMaxLength = nameLength
-		}
-		if statusLength > statusMaxLength {
-			statusMaxLength = statusLength
-		}
-	}
-	format := fmt.Sprintf(
-		"%%-%ds  %%-%ds  %%-%ds  %%-15s  %%-15s  %%-15s  %%-35s\n",
-		idMaxLength,
-		nameMaxLength,
-		statusMaxLength,
-	)
-	fmt.Printf(format, "ID", "Name", "Status", "Public IP", "Private IP", "Type", "Created At")
-	for _, instance := range instances.Instances.Instance {
-		if instance.ShouldHide() {
-			continue
-		}
-		createdAt, _ := time.Parse("2006-01-02T15:04Z", instance.CreationTime)
-		duration := time.Since(createdAt)
-		createdAtStr := fmt.Sprintf("%s (%.0f days ago)",
-			createdAt.Local().Format("2006-01-02 15:04:05"),
-			math.Floor(duration.Hours()/24))
-		fmt.Printf(
-			format,
+		return []interface{}{
 			instance.InstanceId,
 			instance.InstanceName,
 			instance.Status,
 			instance.PublicIpAddress.GetIPAddress(0),
 			instance.InnerIpAddress.GetIPAddress(0),
 			instance.InstanceType,
-			createdAtStr,
-		)
+			instance.RegionId,
+			dateStr(instance.CreationTime),
+		}
+	})
+}
+
+func dateStr(input string) (output string) {
+	createdAt, _ := time.Parse("2006-01-02T15:04Z", input)
+	output = fmt.Sprintf("%s (%.0f days ago)",
+		createdAt.Local().Format("2006-01-02 15:04:05"),
+		math.Floor(time.Since(createdAt).Hours()/24))
+	return
+}
+
+func shouldShow(instance ECSInstance) bool {
+	if showAll {
+		return true
+	} else {
+		isHidden := strings.Contains(instance.Description, "[HIDE]")
+		if showHiddenOnly {
+			return isHidden
+		} else {
+			return !isHidden
+		}
 	}
 }

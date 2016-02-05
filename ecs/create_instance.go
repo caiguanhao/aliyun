@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/caiguanhao/aliyun/ecs/errors"
-	"github.com/caiguanhao/aliyun/ecs/opts"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 type CreateInstance struct {
@@ -13,53 +12,104 @@ type CreateInstance struct {
 	RequestId  string `json:"RequestId"`
 }
 
-var password = os.Getenv("PASSWORD")
-
-func validate() errors.Errors {
-	var errs errors.Errors
-	if len(password) < 1 {
-		errs.Add("Please provide a password via environment variable PASSWORD.")
-	}
-	if len(opts.InstanceImage) < 1 {
-		errs.Add("Please provide a --image.")
-	}
-	if len(opts.InstanceType) < 1 {
-		errs.Add("Please provide a --type.")
-	}
-	if len(opts.InstanceGroup) < 1 {
-		errs.Add("Please provide a --group.")
-	}
-	if len(opts.InstanceName) < 1 {
-		errs.Add("Please provide a --name.")
-	}
-	if len(opts.Region) < 1 {
-		errs.Add("Please provide a --region.")
-	}
-	return errs
+var CREATE_INSTANCE cli.Command = cli.Command{
+	Name:    "create-instance",
+	Aliases: []string{"create", "c"},
+	Usage:   "create an instance",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "image, i",
+			Usage: "create using this image",
+		},
+		cli.StringFlag{
+			Name:  "type, t",
+			Usage: "type of the new instance",
+		},
+		cli.StringFlag{
+			Name:  "name, n",
+			Usage: "name of the new instance",
+		},
+		cli.StringFlag{
+			Name:  "host, H",
+			Usage: "host name of the new instance, defaults to value of --name",
+		},
+		cli.StringFlag{
+			Name:  "group, g",
+			Usage: "put the new instance in to this group",
+		},
+		cli.StringFlag{
+			Name:  "region, r",
+			Usage: "put the new instance in to this region",
+		},
+		cli.StringSliceFlag{
+			Name:  "disk, d",
+			Usage: "specify data disk size in GB ranges from 5 to 2000 (can be specified more than once; no data disk by default)",
+		},
+		cli.StringFlag{
+			Name:  "incoming-bandwidth, I",
+			Value: "200",
+			Usage: "maximum incoming bandwidth in Mbps ranges from 1 to 200, default is 200 (free in charge)",
+		},
+		cli.StringFlag{
+			Name:  "outgoing-bandwidth, O",
+			Value: "5",
+			Usage: "maximum outgoing bandwidth in Mbps ranges from 1 to 200, default is 5 (pay per use)",
+		},
+		cli.StringFlag{
+			Name:   "password, p",
+			Usage:  "password of the new instance, can be specified from env var",
+			EnvVar: "PASSWORD",
+		},
+	},
+	Action: func(c *cli.Context) {
+		host := c.String("host")
+		if host == "" {
+			host = c.String("name")
+		}
+		params := map[string]string{
+			"ImageId":                 c.String("image"),
+			"InstanceType":            c.String("type"),
+			"SecurityGroupId":         c.String("group"),
+			"InstanceName":            c.String("name"),
+			"HostName":                host,
+			"RegionId":                c.String("region"),
+			"Password":                c.String("password"),
+			"InternetMaxBandwidthIn":  c.String("incoming-bandwidth"),
+			"InternetMaxBandwidthOut": c.String("outgoing-bandwidth"),
+			"InternetChargeType":      "PayByTraffic",
+			"SystemDisk.Category":     "cloud",
+		}
+		for i, size := range c.StringSlice("disk") {
+			params[fmt.Sprintf("DataDisk.%d.Size", i+1)] = size
+		}
+		Print(ECS_INSTANCE.CreateInstance(params))
+	},
 }
 
-func (create *CreateInstance) Do(ecs *ECS) (*CreateInstance, error) {
-	if errs := validate(); errs.HaveError() {
-		return nil, errs.Errorify()
+func (ecs *ECS) CreateInstance(_params map[string]string) (resp CreateInstance, _ error) {
+	params := map[string]string{
+		"Action": "CreateInstance",
 	}
-	return create, ecs.Request(map[string]string{
-		"Action":                        "CreateInstance",
-		"ImageId":                       opts.InstanceImage,
-		"InstanceType":                  opts.InstanceType,
-		"SecurityGroupId":               opts.InstanceGroup,
-		"InstanceName":                  opts.InstanceName,
-		"HostName":                      opts.InstanceName,
-		"RegionId":                      opts.Region,
-		"InternetChargeType":            "PayByTraffic",
-		"InternetMaxBandwidthIn":        "5",
-		"InternetMaxBandwidthOut":       "5",
-		"Password":                      password,
-		"SystemDisk.Category":           "cloud",
-		"DataDisk.1.Size":               "10",
-		"DataDisk.1.Category":           "cloud",
-		"DataDisk.1.Device":             "/dev/xvdb",
-		"DataDisk.1.DeleteWithInstance": "true",
-	}, create)
+	for k, v := range _params {
+		params[k] = v
+	}
+	var errs errors.Errors
+	for k, v := range map[string]string{
+		"Password":        "password",
+		"ImageId":         "image",
+		"InstanceType":    "type",
+		"SecurityGroupId": "group",
+		"InstanceName":    "name",
+		"RegionId":        "region",
+	} {
+		if len(params[k]) < 1 {
+			errs.Add(fmt.Sprintf("Please provide --%s.", v))
+		}
+	}
+	if errs.HaveError() {
+		return resp, errs.Errorify()
+	}
+	return resp, ecs.Request(params, &resp)
 }
 
 func (create CreateInstance) Print() {
