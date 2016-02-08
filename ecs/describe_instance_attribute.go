@@ -83,6 +83,7 @@ func (instance ECSInstance) PrintTable() {
 	fmt.Printf(format, "Image", instance.ImageId)
 	fmt.Printf(format, "Status", instance.Status)
 	fmt.Printf(format, "Region", instance.RegionId)
+	fmt.Printf(format, "Zone", instance.ZoneId)
 	fmt.Printf(format, "Public IP", instance.PublicIpAddress.GetIPAddress(0))
 	fmt.Printf(format, "Private IP", instance.InnerIpAddress.GetIPAddress(0))
 	fmt.Printf(format, "Created At", createdAtStr)

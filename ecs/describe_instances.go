@@ -75,7 +75,7 @@ func (instances ECSInstances) Print() {
 }
 
 func (instances ECSInstances) PrintTable() {
-	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", "Type", "Region", "Created At"}
+	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", "Type", "Region/Zone", "Created At"}
 	PrintTable(fields, len(instances), func(i int) []interface{} {
 		instance := instances[i]
 		if !shouldShow(instance) {
@@ -88,7 +88,7 @@ func (instances ECSInstances) PrintTable() {
 			instance.PublicIpAddress.GetIPAddress(0),
 			instance.InnerIpAddress.GetIPAddress(0),
 			instance.InstanceType,
-			instance.RegionId,
+			instance.ZoneId,
 			dateStr(instance.CreationTime),
 		}
 	})
