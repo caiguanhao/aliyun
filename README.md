@@ -21,20 +21,20 @@ VERSION:
    1.0.0
 
 COMMANDS:
-   list-instances, list, l		list all ECS instances of all regions
-   list-images, images, i		show info of all images
-   list-regions, regions, n		list all available regions
-   list-instance-types, types, t	list all instance types
-   list-security-groups, groups, g	list all security groups
-   create-instance, create, c		create an instance
-   allocate-public-ip, allocate, a	allocate an IP address for an instance
-   start-instance, start, s		start an instance
-   stop-instance, stop, k		stop an instance
-   restart-instance, restart, r		restart an instance
-   remove-instance, remove, d		remove an instance
-   update-instance, update, e		update attributes of an instance
-   hide-instance, hide, h		hide instance from instance list
-   unhide-instance, unhide, u		un-hide instance from instance list
+   list-instances, list, l              list all ECS instances of all regions
+   list-images, images, i               show info of all images
+   list-regions, regions, n             list all available regions and zones
+   list-instance-types, types, t        list all instance types
+   list-security-groups, groups, g      list all security groups
+   create-instance, create, c           create an instance
+   allocate-public-ip, allocate, a      allocate an IP address for an instance
+   start-instance, start, s             start an instance
+   stop-instance, stop, k               stop an instance
+   restart-instance, restart, r         restart an instance
+   remove-instance, remove, d           remove an instance
+   update-instance, update, e           update attributes of an instance
+   hide-instance, hide, h               hide instance from instance list
+   unhide-instance, unhide, u           un-hide instance from instance list
 
 GLOBAL OPTIONS:
    --quiet, -q		show only name or ID
