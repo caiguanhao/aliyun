@@ -16,7 +16,9 @@ var ALLOCATE_PUBLIC_IP_ADDRESS cli.Command = cli.Command{
 	Aliases: []string{"allocate", "a"},
 	Usage:   "allocate an IP address for an instance",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.AllocatePublicIpAddressById(c.Args().Get(0)))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.AllocatePublicIpAddressById(arg))
+		})
 	},
 }
 

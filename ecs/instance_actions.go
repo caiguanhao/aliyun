@@ -15,7 +15,9 @@ var REMOVE_INSTANCE cli.Command = cli.Command{
 	Aliases: []string{"remove", "d"},
 	Usage:   "remove an instance",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.RemoveInstanceById(c.Args().Get(0)))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.RemoveInstanceById(arg))
+		})
 	},
 }
 
@@ -24,7 +26,9 @@ var RESTART_INSTANCE cli.Command = cli.Command{
 	Aliases: []string{"restart", "r"},
 	Usage:   "restart an instance",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.RestartInstanceById(c.Args().Get(0)))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.RestartInstanceById(arg))
+		})
 	},
 }
 
@@ -33,7 +37,9 @@ var START_INSTANCE cli.Command = cli.Command{
 	Aliases: []string{"start", "s"},
 	Usage:   "start an instance",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.StartInstanceById(c.Args().Get(0)))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.StartInstanceById(arg))
+		})
 	},
 }
 
@@ -42,7 +48,9 @@ var STOP_INSTANCE cli.Command = cli.Command{
 	Aliases: []string{"stop", "k"},
 	Usage:   "stop an instance",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.StopInstanceById(c.Args().Get(0)))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.StopInstanceById(arg))
+		})
 	},
 }
 

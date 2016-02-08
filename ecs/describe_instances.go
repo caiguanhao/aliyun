@@ -41,11 +41,12 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) {
-		id := c.Args().Get(0)
-		if id == "" {
-			Print(ECS_INSTANCE.DescribeInstances())
+		if c.Args().Present() {
+			ForAllArgsDo([]string(c.Args()), func(arg string) {
+				Print(ECS_INSTANCE.DescribeInstanceAttributeById(arg))
+			})
 		} else {
-			Print(ECS_INSTANCE.DescribeInstanceAttributeById(id))
+			Print(ECS_INSTANCE.DescribeInstances())
 		}
 	},
 }

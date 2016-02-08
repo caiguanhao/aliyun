@@ -168,6 +168,12 @@ type ECSInterface interface {
 	Print()
 }
 
+func ForAllArgsDo(args []string, call func(arg string)) {
+	for _, arg := range args {
+		call(arg)
+	}
+}
+
 func Print(printable ECSInterface, others ...interface{}) {
 	err := others[len(others)-1]
 	if err == nil {

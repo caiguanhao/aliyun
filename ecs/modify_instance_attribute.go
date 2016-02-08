@@ -34,7 +34,9 @@ var UPDATE_INSTANCE cli.Command = cli.Command{
 		if c.IsSet("description") {
 			params["Description"] = c.String("description")
 		}
-		Print(ECS_INSTANCE.ModifyInstanceAttributeById(c.Args().Get(0), params))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.ModifyInstanceAttributeById(arg, params))
+		})
 	},
 }
 
@@ -43,7 +45,9 @@ var HIDE_INSTANCE cli.Command = cli.Command{
 	Aliases: []string{"hide", "h"},
 	Usage:   "hide instance from instance list",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.HideInstanceById(c.Args().Get(0), true))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.HideInstanceById(arg, true))
+		})
 	},
 }
 
@@ -52,7 +56,9 @@ var UNHIDE_INSTANCE cli.Command = cli.Command{
 	Aliases: []string{"unhide", "u"},
 	Usage:   "un-hide instance from instance list",
 	Action: func(c *cli.Context) {
-		Print(ECS_INSTANCE.HideInstanceById(c.Args().Get(0), false))
+		ForAllArgsDo([]string(c.Args()), func(arg string) {
+			Print(ECS_INSTANCE.HideInstanceById(arg, false))
+		})
 	},
 }
 
