@@ -41,6 +41,10 @@ var CREATE_INSTANCE cli.Command = cli.Command{
 			Name:  "region, r",
 			Usage: "put the new instance in to this region",
 		},
+		cli.StringFlag{
+			Name:  "zone, z",
+			Usage: "put the new instance in to this zone, use random zone if not specified",
+		},
 		cli.StringSliceFlag{
 			Name:  "disk, d",
 			Usage: "specify data disk size in GB ranges from 5 to 2000 (can be specified more than once; no data disk by default)",
@@ -73,6 +77,7 @@ var CREATE_INSTANCE cli.Command = cli.Command{
 			"InstanceName":            c.String("name"),
 			"HostName":                host,
 			"RegionId":                c.String("region"),
+			"ZoneId":                  c.String("zone"),
 			"Password":                c.String("password"),
 			"InternetMaxBandwidthIn":  c.String("incoming-bandwidth"),
 			"InternetMaxBandwidthOut": c.String("outgoing-bandwidth"),
