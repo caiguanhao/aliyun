@@ -77,7 +77,10 @@ func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
 		fmt.Println(url)
 	}
 
-	res, err := http.Get(url)
+	client := http.Client{
+		Timeout: time.Duration(2 * time.Second),
+	}
+	res, err := client.Get(url)
 	if err != nil {
 		return err
 	}
