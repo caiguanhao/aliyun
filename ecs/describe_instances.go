@@ -25,9 +25,10 @@ var showAll bool
 var showHiddenOnly bool
 
 var DESCRIBE_INSTANCES cli.Command = cli.Command{
-	Name:    "list-instances",
-	Aliases: []string{"list", "l"},
-	Usage:   "list all ECS instances of all regions",
+	Name:      "list-instances",
+	Aliases:   []string{"list", "l"},
+	Usage:     "list all ECS instances of all regions",
+	ArgsUsage: "[instance IDs...]",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:        "all, a",
@@ -49,6 +50,14 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			Print(ECS_INSTANCE.DescribeInstances())
 		}
 	},
+	BashComplete: DescribeInstancesForBashComplete,
+}
+
+func DescribeInstancesForBashComplete(c *cli.Context) {
+	instances, _ := ECS_INSTANCE.DescribeInstances()
+	for _, instance := range instances {
+		fmt.Printf("%s@%s\n", instance.InstanceId, instance.InstanceName)
+	}
 }
 
 func (ecs *ECS) DescribeInstances() (instances ECSInstances, err error) {

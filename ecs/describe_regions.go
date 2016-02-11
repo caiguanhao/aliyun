@@ -15,9 +15,10 @@ type ECSRegion struct {
 var showZonesOnly bool
 
 var DESCRIBE_REGIONS cli.Command = cli.Command{
-	Name:    "list-regions",
-	Aliases: []string{"regions", "n"},
-	Usage:   "list all available regions and zones",
+	Name:      "list-regions",
+	Aliases:   []string{"regions", "n"},
+	Usage:     "list all available regions and zones",
+	ArgsUsage: " ",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:        "zones-only, z",

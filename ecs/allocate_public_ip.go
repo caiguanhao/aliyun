@@ -12,14 +12,16 @@ type AllocatePublicIpAddress struct {
 }
 
 var ALLOCATE_PUBLIC_IP_ADDRESS cli.Command = cli.Command{
-	Name:    "allocate-public-ip",
-	Aliases: []string{"allocate", "a"},
-	Usage:   "allocate an IP address for an instance",
+	Name:      "allocate-public-ip",
+	Aliases:   []string{"allocate", "a"},
+	Usage:     "allocate an IP address for an instance",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.AllocatePublicIpAddressById(arg))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 func (ecs *ECS) AllocatePublicIpAddressById(id string) (alloc AllocatePublicIpAddress, _ error) {

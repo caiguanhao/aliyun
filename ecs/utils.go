@@ -173,6 +173,9 @@ type ECSInterface interface {
 
 func ForAllArgsDo(args []string, call func(arg string)) {
 	for _, arg := range args {
+		if strings.Contains(arg, "@") {
+			arg = arg[:strings.Index(arg, "@")]
+		}
 		call(arg)
 	}
 }

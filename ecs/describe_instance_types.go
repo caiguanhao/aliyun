@@ -14,9 +14,10 @@ type ECSInstanceType struct {
 }
 
 var DESCRIBE_INSTANCE_TYPES cli.Command = cli.Command{
-	Name:    "list-instance-types",
-	Aliases: []string{"types", "t"},
-	Usage:   "list all instance types",
+	Name:      "list-instance-types",
+	Aliases:   []string{"types", "t"},
+	Usage:     "list all instance types",
+	ArgsUsage: " ",
 	Action: func(c *cli.Context) {
 		Print(ECS_INSTANCE.DescribeInstanceTypes())
 	},

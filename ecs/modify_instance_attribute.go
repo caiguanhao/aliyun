@@ -13,9 +13,10 @@ type ModifyInstanceAttribute struct {
 }
 
 var UPDATE_INSTANCE cli.Command = cli.Command{
-	Name:    "update-instance",
-	Aliases: []string{"update", "e"},
-	Usage:   "update attributes of an instance",
+	Name:      "update-instance",
+	Aliases:   []string{"update", "e"},
+	Usage:     "update attributes of an instance",
+	ArgsUsage: "[instance IDs...]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "name, n",
@@ -38,28 +39,33 @@ var UPDATE_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.ModifyInstanceAttributeById(arg, params))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 var HIDE_INSTANCE cli.Command = cli.Command{
-	Name:    "hide-instance",
-	Aliases: []string{"hide", "h"},
-	Usage:   "hide instance from instance list",
+	Name:      "hide-instance",
+	Aliases:   []string{"hide", "h"},
+	Usage:     "hide instance from instance list",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.HideInstanceById(arg, true))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 var UNHIDE_INSTANCE cli.Command = cli.Command{
-	Name:    "unhide-instance",
-	Aliases: []string{"unhide", "u"},
-	Usage:   "un-hide instance from instance list",
+	Name:      "unhide-instance",
+	Aliases:   []string{"unhide", "u"},
+	Usage:     "un-hide instance from instance list",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.HideInstanceById(arg, false))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 func (ecs *ECS) ModifyInstanceAttributeById(id string, _params map[string]string) (modify ModifyInstanceAttribute, _ error) {

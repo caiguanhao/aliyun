@@ -11,47 +11,55 @@ type ActionResponse struct {
 }
 
 var REMOVE_INSTANCE cli.Command = cli.Command{
-	Name:    "remove-instance",
-	Aliases: []string{"remove", "d"},
-	Usage:   "remove an instance",
+	Name:      "remove-instance",
+	Aliases:   []string{"remove", "d"},
+	Usage:     "remove an instance",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.RemoveInstanceById(arg))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 var RESTART_INSTANCE cli.Command = cli.Command{
-	Name:    "restart-instance",
-	Aliases: []string{"restart", "r"},
-	Usage:   "restart an instance",
+	Name:      "restart-instance",
+	Aliases:   []string{"restart", "r"},
+	Usage:     "restart an instance",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.RestartInstanceById(arg))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 var START_INSTANCE cli.Command = cli.Command{
-	Name:    "start-instance",
-	Aliases: []string{"start", "s"},
-	Usage:   "start an instance",
+	Name:      "start-instance",
+	Aliases:   []string{"start", "s"},
+	Usage:     "start an instance",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.StartInstanceById(arg))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 var STOP_INSTANCE cli.Command = cli.Command{
-	Name:    "stop-instance",
-	Aliases: []string{"stop", "k"},
-	Usage:   "stop an instance",
+	Name:      "stop-instance",
+	Aliases:   []string{"stop", "k"},
+	Usage:     "stop an instance",
+	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
 		ForAllArgsDo([]string(c.Args()), func(arg string) {
 			Print(ECS_INSTANCE.StopInstanceById(arg))
 		})
 	},
+	BashComplete: DescribeInstancesForBashComplete,
 }
 
 func executeInstanceActionById(ecs *ECS, action, id string) (resp ActionResponse, _ error) {

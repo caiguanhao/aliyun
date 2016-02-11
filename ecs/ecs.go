@@ -23,6 +23,7 @@ func main() {
 	app.Version = "1.0.0"
 	app.Usage = "control Aliyun ECS instances"
 	app.HideHelp = true
+	app.EnableBashCompletion = true
 	app.Commands = []cli.Command{
 		DESCRIBE_INSTANCES,
 		DESCRIBE_IMAGES,

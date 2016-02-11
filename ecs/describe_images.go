@@ -29,9 +29,10 @@ type ECSImage struct {
 }
 
 var DESCRIBE_IMAGES cli.Command = cli.Command{
-	Name:    "list-images",
-	Aliases: []string{"images", "i"},
-	Usage:   "show info of all images",
+	Name:      "list-images",
+	Aliases:   []string{"images", "i"},
+	Usage:     "show info of all images",
+	ArgsUsage: " ",
 	Action: func(c *cli.Context) {
 		Print(ECS_INSTANCE.DescribeImages())
 	},

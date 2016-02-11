@@ -16,9 +16,10 @@ type ECSSecurityGroup struct {
 type ECSSecurityGroups []ECSSecurityGroup
 
 var DESCRIBE_SECURITY_GROUPS cli.Command = cli.Command{
-	Name:    "list-security-groups",
-	Aliases: []string{"groups", "g"},
-	Usage:   "list all security groups",
+	Name:      "list-security-groups",
+	Aliases:   []string{"groups", "g"},
+	Usage:     "list all security groups",
+	ArgsUsage: " ",
 	Action: func(c *cli.Context) {
 		Print(ECS_INSTANCE.DescribeSecurityGroups())
 	},
