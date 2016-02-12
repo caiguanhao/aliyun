@@ -35,6 +35,7 @@ COMMANDS:
    update-instance, update, e           update attributes of an instance
    hide-instance, hide, h               hide instance from instance list
    unhide-instance, unhide, u           un-hide instance from instance list
+   monitor-instance, monitor, m         show CPU and network usage history of an instance
 
 GLOBAL OPTIONS:
    --quiet, -q		show only name or ID

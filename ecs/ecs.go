@@ -39,6 +39,7 @@ func main() {
 		UPDATE_INSTANCE,
 		HIDE_INSTANCE,
 		UNHIDE_INSTANCE,
+		DESCRIBE_INSTANCE_MONITOR_DATA,
 	}
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{

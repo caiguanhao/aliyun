@@ -19,6 +19,8 @@ import (
 	"github.com/caiguanhao/aliyun/ecs/errors"
 )
 
+const TIME_FORMAT = "2006-01-02T15:04:05Z"
+
 func sign(secret string, query string) string {
 	mac := hmac.New(sha1.New, []byte(secret+"&"))
 	mac.Write([]byte("GET&%2F&" + query))
@@ -62,7 +64,7 @@ func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
 		"SignatureMethod":  "HMAC-SHA1",
 		"SignatureVersion": "1.0",
 		"SignatureNonce":   randomString(64),
-		"Timestamp":        time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		"Timestamp":        time.Now().UTC().Format(TIME_FORMAT),
 		"PageSize":         "50",
 		"PageNumber":       "1",
 	}
