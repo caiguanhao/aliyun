@@ -73,6 +73,7 @@ var CREATE_INSTANCE cli.Command = cli.Command{
 		if checkValuesForBashComplete(c) {
 			return
 		}
+		ensureInstanceOfTheSameNameDoesNotExist(c.String("name"))
 		host := c.String("host")
 		if host == "" {
 			host = c.String("name")

@@ -33,6 +33,7 @@ var UPDATE_INSTANCE cli.Command = cli.Command{
 		}
 		params := map[string]string{}
 		if c.IsSet("name") {
+			ensureInstanceOfTheSameNameDoesNotExist(c.String("name"))
 			params["InstanceName"] = c.String("name")
 		}
 		if c.IsSet("description") {

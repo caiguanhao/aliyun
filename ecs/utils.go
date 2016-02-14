@@ -330,3 +330,13 @@ func describeInstancesForBashComplete(filter func(instance ECSInstance) bool) fu
 		}
 	}
 }
+
+func ensureInstanceOfTheSameNameDoesNotExist(name string) {
+	instances, _ := ECS_INSTANCE.DescribeInstances()
+	for _, instance := range instances {
+		if instance.InstanceName == name {
+			fmt.Fprintln(os.Stderr, "Instance of the same name already exists. Please choose a different name.")
+			os.Exit(1)
+		}
+	}
+}
