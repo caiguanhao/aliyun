@@ -3,13 +3,27 @@ package main
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
+const instanceDateTimeFormat = "2006-01-02T15:04Z"
+
 type ECSInstances []ECSInstance
+
+func (a ECSInstances) Len() int      { return len(a) }
+func (a ECSInstances) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ECSInstances) Less(i, j int) bool {
+	b, be := time.Parse(instanceDateTimeFormat, a[i].CreationTime)
+	c, ce := time.Parse(instanceDateTimeFormat, a[j].CreationTime)
+	if be != nil || ce != nil {
+		return a[i].CreationTime > a[j].CreationTime
+	}
+	return b.After(c)
+}
 
 type DescribeInstances struct {
 	Instances struct {
@@ -72,6 +86,7 @@ func (ecs *ECS) DescribeInstances() (instances ECSInstances, err error) {
 		}
 		return
 	})
+	sort.Sort(instances)
 	return
 }
 
@@ -105,9 +120,9 @@ func (instances ECSInstances) PrintTable() {
 }
 
 func dateStr(input string) (output string) {
-	createdAt, _ := time.Parse("2006-01-02T15:04Z", input)
+	createdAt, _ := time.Parse(instanceDateTimeFormat, input)
 	output = fmt.Sprintf("%s (%.0f days ago)",
-		createdAt.Local().Format("2006-01-02 15:04:05"),
+		createdAt.Local().Format(YMD_HMS_FORMAT),
 		math.Floor(time.Since(createdAt).Hours()/24))
 	return
 }

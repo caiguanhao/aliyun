@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/caiguanhao/aliyun/vendor/cli"
 )
@@ -14,6 +15,10 @@ type ECSSecurityGroup struct {
 }
 
 type ECSSecurityGroups []ECSSecurityGroup
+
+func (a ECSSecurityGroups) Len() int           { return len(a) }
+func (a ECSSecurityGroups) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ECSSecurityGroups) Less(i, j int) bool { return a[i].SecurityGroupId < a[j].SecurityGroupId }
 
 var DESCRIBE_SECURITY_GROUPS cli.Command = cli.Command{
 	Name:      "list-security-groups",
@@ -51,6 +56,7 @@ func (ecs *ECS) DescribeSecurityGroups() (groups ECSSecurityGroups, err error) {
 		}
 		return
 	})
+	sort.Sort(groups)
 	return
 }
 

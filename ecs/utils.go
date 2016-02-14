@@ -20,6 +20,7 @@ import (
 )
 
 const TIME_FORMAT = "2006-01-02T15:04:05Z"
+const YMD_HMS_FORMAT = "2006-01-02 15:04:05"
 
 func sign(secret string, query string) string {
 	mac := hmac.New(sha1.New, []byte(secret+"&"))

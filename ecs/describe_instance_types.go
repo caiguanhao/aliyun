@@ -45,7 +45,10 @@ func (a ECSInstanceTypes) Less(i, j int) bool {
 	return false
 }
 
-func (ecs *ECS) DescribeInstanceTypes() (_ ECSInstanceTypes, resp DescribeInstanceTypes, _ error) {
+func (ecs *ECS) DescribeInstanceTypes() (types ECSInstanceTypes, resp DescribeInstanceTypes, _ error) {
+	defer func() {
+		sort.Sort(types)
+	}()
 	return resp.InstanceTypes.InstanceType, resp, ecs.Request(map[string]string{
 		"Action": "DescribeInstanceTypes",
 	}, &resp)
@@ -58,7 +61,6 @@ func (types ECSInstanceTypes) Print() {
 }
 
 func (types ECSInstanceTypes) PrintTable() {
-	sort.Sort(types)
 	fields := []interface{}{"Name", "CPU Core", "Memory"}
 	PrintTable(fields, len(types), func(i int) []interface{} {
 		itype := types[i]

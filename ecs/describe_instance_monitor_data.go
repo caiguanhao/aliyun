@@ -95,7 +95,7 @@ func (data ECSInstanceMonitorData) PrintTable() {
 		datum := data[i]
 		t, _ := time.Parse(TIME_FORMAT, datum.TimeStamp)
 		return []interface{}{
-			t.Local().Format("2006-01-02 15:04:05"),
+			t.Local().Format(YMD_HMS_FORMAT),
 			fmt.Sprintf("%d%%", datum.CPU),
 			fmt.Sprintf("%d KB/s", datum.InternetRX/8/period),
 			fmt.Sprintf("%d KB/s", datum.InternetTX/8/period),

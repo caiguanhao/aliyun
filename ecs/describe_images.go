@@ -55,7 +55,10 @@ func (a ECSImages) Len() int           { return len(a) }
 func (a ECSImages) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ECSImages) Less(i, j int) bool { return a[i].ImageId < a[j].ImageId }
 
-func (ecs *ECS) DescribeImages() (_ ECSImages, resp DescribeImages, _ error) {
+func (ecs *ECS) DescribeImages() (images ECSImages, resp DescribeImages, _ error) {
+	defer func() {
+		sort.Sort(images)
+	}()
 	return resp.Images.Image, resp, ecs.Request(map[string]string{
 		"Action":   "DescribeImages",
 		"RegionId": "",
@@ -63,7 +66,6 @@ func (ecs *ECS) DescribeImages() (_ ECSImages, resp DescribeImages, _ error) {
 }
 
 func (images ECSImages) Print() {
-	sort.Sort(images)
 	for _, image := range images {
 		fmt.Println(image.ImageId)
 	}
