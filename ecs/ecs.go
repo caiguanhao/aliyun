@@ -57,7 +57,7 @@ func main() {
 	app.BashComplete = func(c *cli.Context) {
 		for _, command := range c.App.Commands {
 			for _, name := range command.Names() {
-				if len(name) < 2 {
+				if len(name) <= 2 {
 					continue
 				}
 				fmt.Fprintln(c.App.Writer, name)

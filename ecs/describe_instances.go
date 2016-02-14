@@ -40,7 +40,7 @@ var showHiddenOnly bool
 
 var DESCRIBE_INSTANCES cli.Command = cli.Command{
 	Name:      "list-instances",
-	Aliases:   []string{"list", "l"},
+	Aliases:   []string{"list", "ls", "l"},
 	Usage:     "list all ECS instances of all regions",
 	ArgsUsage: "[instance IDs...]",
 	Flags: []cli.Flag{

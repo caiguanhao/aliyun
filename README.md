@@ -21,7 +21,7 @@ VERSION:
    1.0.0
 
 COMMANDS:
-   list-instances, list, l              list all ECS instances of all regions
+   list-instances, list, ls, l          list all ECS instances of all regions
    list-images, images, i               show info of all images
    list-regions, regions, n             list all available regions and zones
    list-instance-types, types, t        list all instance types
@@ -31,7 +31,7 @@ COMMANDS:
    start-instance, start, s             start an instance
    stop-instance, stop, S               stop an instance
    restart-instance, restart, r         restart an instance
-   remove-instance, remove, R           remove an instance
+   remove-instance, remove, rm, R       remove an instance
    update-instance, update, u           update attributes of an instance
    hide-instance, hide, h               hide instance from instance list
    unhide-instance, unhide, H           un-hide instance from instance list
