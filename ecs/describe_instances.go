@@ -64,7 +64,7 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			Print(ECS_INSTANCE.DescribeInstances())
 		}
 	},
-	BashComplete: describeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete(nil),
 }
 
 func (ecs *ECS) DescribeInstances() (instances ECSInstances, err error) {

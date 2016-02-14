@@ -319,9 +319,14 @@ func checkValuesForBashComplete(c *cli.Context) bool {
 	return false
 }
 
-func describeInstancesForBashComplete(c *cli.Context) {
-	instances, _ := ECS_INSTANCE.DescribeInstances()
-	for _, instance := range instances {
-		fmt.Printf("%s@%s\n", instance.InstanceId, instance.InstanceName)
+func describeInstancesForBashComplete(filter func(instance ECSInstance) bool) func(c *cli.Context) {
+	return func(c *cli.Context) {
+		instances, _ := ECS_INSTANCE.DescribeInstances()
+		for _, instance := range instances {
+			if filter != nil && !filter(instance) {
+				continue
+			}
+			fmt.Printf("%s@%s\n", instance.InstanceId, instance.InstanceName)
+		}
 	}
 }

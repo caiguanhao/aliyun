@@ -20,7 +20,9 @@ var REMOVE_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.RemoveInstanceById(arg))
 		})
 	},
-	BashComplete: describeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete(func(instance ECSInstance) bool {
+		return instance.Status == "Stopped"
+	}),
 }
 
 var RESTART_INSTANCE cli.Command = cli.Command{
@@ -33,7 +35,9 @@ var RESTART_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.RestartInstanceById(arg))
 		})
 	},
-	BashComplete: describeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete(func(instance ECSInstance) bool {
+		return instance.Status == "Running"
+	}),
 }
 
 var START_INSTANCE cli.Command = cli.Command{
@@ -46,7 +50,9 @@ var START_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.StartInstanceById(arg))
 		})
 	},
-	BashComplete: describeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete(func(instance ECSInstance) bool {
+		return instance.Status == "Stopped"
+	}),
 }
 
 var STOP_INSTANCE cli.Command = cli.Command{
@@ -59,7 +65,9 @@ var STOP_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.StopInstanceById(arg))
 		})
 	},
-	BashComplete: describeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete(func(instance ECSInstance) bool {
+		return instance.Status == "Running"
+	}),
 }
 
 func executeInstanceActionById(ecs *ECS, action, id string) (resp ActionResponse, _ error) {
