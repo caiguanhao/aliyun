@@ -21,7 +21,7 @@ var ALLOCATE_PUBLIC_IP_ADDRESS cli.Command = cli.Command{
 			Print(ECS_INSTANCE.AllocatePublicIpAddressById(arg))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 func (ecs *ECS) AllocatePublicIpAddressById(id string) (alloc AllocatePublicIpAddress, _ error) {

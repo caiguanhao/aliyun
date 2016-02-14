@@ -70,7 +70,7 @@ var DESCRIBE_INSTANCE_MONITOR_DATA cli.Command = cli.Command{
 			Print(ECS_INSTANCE.DescribeInstanceMonitorData(arg, then, now, period))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 func (ecs *ECS) DescribeInstanceMonitorData(id string, startTime, endTime time.Time, period int) (_ ECSInstanceMonitorData, resp DescribeInstanceMonitorData, err error) {

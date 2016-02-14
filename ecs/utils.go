@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/caiguanhao/aliyun/ecs/errors"
+	"github.com/caiguanhao/aliyun/vendor/cli"
 )
 
 const TIME_FORMAT = "2006-01-02T15:04:05Z"
@@ -220,5 +221,107 @@ func PrintTable(fields []interface{}, length int, process func(i int) []interfac
 	fmt.Printf(format, fields...)
 	for _, line := range lines {
 		fmt.Printf(format, line...)
+	}
+}
+
+func printFlagsForCommand(c *cli.Context, name string) {
+	var flags []cli.Flag
+	for _, command := range c.App.Commands {
+		if command.Name == name {
+			flags = command.Flags
+			break
+		}
+	}
+	for _, flag := range flags {
+		for _, name := range strings.Split(flag.GetName(), ",") {
+			name = strings.TrimSpace(name)
+			fmt.Print("-")
+			if len(name) > 1 {
+				fmt.Print("-")
+			}
+			fmt.Println(name)
+		}
+	}
+}
+
+func hintsForBashComplete(c *cli.Context, flagName *string) {
+	if flagName == nil {
+		return
+	} else if *flagName == "disk" {
+		fmt.Println(5, 10, 100, 200, 500, 1000, 2000)
+	} else if *flagName == "group" {
+		groups, _ := ECS_INSTANCE.DescribeSecurityGroups()
+		for _, group := range groups {
+			fmt.Println(group.SecurityGroupId)
+		}
+	} else if *flagName == "host" || *flagName == "name" {
+		instances, _ := ECS_INSTANCE.DescribeInstances()
+		for _, instance := range instances {
+			fmt.Println(instance.InstanceName)
+		}
+	} else if *flagName == "image" {
+		images, _, _ := ECS_INSTANCE.DescribeImages()
+		for _, image := range images {
+			fmt.Println(image.ImageId)
+		}
+	} else if *flagName == "incoming-bandwidth" {
+		fmt.Println(DEFAULT_INCOMING_BANDWIDTH)
+	} else if *flagName == "outgoing-bandwidth" {
+		fmt.Println(DEFAULT_OUTGOING_BANDWIDTH)
+	} else if *flagName == "region" {
+		regions, _, _ := ECS_INSTANCE.DescribeRegions()
+		for _, region := range regions {
+			fmt.Println(region.RegionID)
+		}
+	} else if *flagName == "type" {
+		types, _, _ := ECS_INSTANCE.DescribeInstanceTypes()
+		for _, _type := range types {
+			fmt.Println(_type.InstanceTypeId)
+		}
+	} else if *flagName == "zone" {
+		region := c.String("region")
+		if region == "" {
+			regions, _ := ECS_INSTANCE.DescribeRegionsAndZones()
+			for _, region := range regions {
+				for _, zone := range region.Zones {
+					fmt.Println(zone)
+				}
+			}
+		} else {
+			zones, _, _ := ECS_INSTANCE.DescribeZones(region)
+			for _, zone := range zones {
+				fmt.Println(zone.ZoneID)
+			}
+		}
+	}
+}
+
+func checkValuesForBashComplete(c *cli.Context) bool {
+	bashCompletionFlag := "--" + cli.BashCompletionFlag.Name
+	for _, flag := range c.Command.Flags {
+		name := strings.Split(flag.GetName(), ",")[0]
+		switch flag.(type) {
+		case cli.StringSliceFlag:
+			for _, value := range c.StringSlice(name) {
+				if value == bashCompletionFlag {
+					hintsForBashComplete(c, &name)
+					return true
+				}
+			}
+		default:
+			value := c.String(name)
+			if value == bashCompletionFlag {
+				hintsForBashComplete(c, &name)
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func describeInstancesForBashComplete(c *cli.Context) {
+	instances, _ := ECS_INSTANCE.DescribeInstances()
+	for _, instance := range instances {
+		fmt.Printf("%s@%s\n", instance.InstanceId, instance.InstanceName)
 	}
 }

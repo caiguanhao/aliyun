@@ -28,6 +28,9 @@ var UPDATE_INSTANCE cli.Command = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) {
+		if checkValuesForBashComplete(c) {
+			return
+		}
 		params := map[string]string{}
 		if c.IsSet("name") {
 			params["InstanceName"] = c.String("name")
@@ -39,7 +42,10 @@ var UPDATE_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.ModifyInstanceAttributeById(arg, params))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: func(c *cli.Context) {
+		printFlagsForCommand(c, "update-instance")
+		describeInstancesForBashComplete(c)
+	},
 }
 
 var HIDE_INSTANCE cli.Command = cli.Command{
@@ -52,7 +58,7 @@ var HIDE_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.HideInstanceById(arg, true))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 var UNHIDE_INSTANCE cli.Command = cli.Command{
@@ -65,7 +71,7 @@ var UNHIDE_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.HideInstanceById(arg, false))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 func (ecs *ECS) ModifyInstanceAttributeById(id string, _params map[string]string) (modify ModifyInstanceAttribute, _ error) {

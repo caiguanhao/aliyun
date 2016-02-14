@@ -20,7 +20,7 @@ var REMOVE_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.RemoveInstanceById(arg))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 var RESTART_INSTANCE cli.Command = cli.Command{
@@ -33,7 +33,7 @@ var RESTART_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.RestartInstanceById(arg))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 var START_INSTANCE cli.Command = cli.Command{
@@ -46,7 +46,7 @@ var START_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.StartInstanceById(arg))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 var STOP_INSTANCE cli.Command = cli.Command{
@@ -59,7 +59,7 @@ var STOP_INSTANCE cli.Command = cli.Command{
 			Print(ECS_INSTANCE.StopInstanceById(arg))
 		})
 	},
-	BashComplete: DescribeInstancesForBashComplete,
+	BashComplete: describeInstancesForBashComplete,
 }
 
 func executeInstanceActionById(ecs *ECS, action, id string) (resp ActionResponse, _ error) {
