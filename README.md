@@ -29,12 +29,12 @@ COMMANDS:
    create-instance, create, c           create an instance
    allocate-public-ip, allocate, a      allocate an IP address for an instance
    start-instance, start, s             start an instance
-   stop-instance, stop, k               stop an instance
+   stop-instance, stop, S               stop an instance
    restart-instance, restart, r         restart an instance
-   remove-instance, remove, d           remove an instance
-   update-instance, update, e           update attributes of an instance
+   remove-instance, remove, R           remove an instance
+   update-instance, update, u           update attributes of an instance
    hide-instance, hide, h               hide instance from instance list
-   unhide-instance, unhide, u           un-hide instance from instance list
+   unhide-instance, unhide, H           un-hide instance from instance list
    monitor-instance, monitor, m         show CPU and network usage history of an instance
 
 GLOBAL OPTIONS:

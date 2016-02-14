@@ -12,7 +12,7 @@ type ActionResponse struct {
 
 var REMOVE_INSTANCE cli.Command = cli.Command{
 	Name:      "remove-instance",
-	Aliases:   []string{"remove", "d"},
+	Aliases:   []string{"remove", "R"},
 	Usage:     "remove an instance",
 	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
@@ -51,7 +51,7 @@ var START_INSTANCE cli.Command = cli.Command{
 
 var STOP_INSTANCE cli.Command = cli.Command{
 	Name:      "stop-instance",
-	Aliases:   []string{"stop", "k"},
+	Aliases:   []string{"stop", "S"},
 	Usage:     "stop an instance",
 	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {

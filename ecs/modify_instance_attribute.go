@@ -14,7 +14,7 @@ type ModifyInstanceAttribute struct {
 
 var UPDATE_INSTANCE cli.Command = cli.Command{
 	Name:      "update-instance",
-	Aliases:   []string{"update", "e"},
+	Aliases:   []string{"update", "u"},
 	Usage:     "update attributes of an instance",
 	ArgsUsage: "[instance IDs...]",
 	Flags: []cli.Flag{
@@ -63,7 +63,7 @@ var HIDE_INSTANCE cli.Command = cli.Command{
 
 var UNHIDE_INSTANCE cli.Command = cli.Command{
 	Name:      "unhide-instance",
-	Aliases:   []string{"unhide", "u"},
+	Aliases:   []string{"unhide", "H"},
 	Usage:     "un-hide instance from instance list",
 	ArgsUsage: "[instance IDs...]",
 	Action: func(c *cli.Context) {
