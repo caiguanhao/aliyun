@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -37,6 +38,9 @@ type DescribeInstances struct {
 
 var showAll bool
 var showHiddenOnly bool
+var matchRegexes []*regexp.Regexp
+var makeHosts bool
+var usePrivateIPAddr bool
 
 var DESCRIBE_INSTANCES cli.Command = cli.Command{
 	Name:      "list-instances",
@@ -46,7 +50,7 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:        "all, a",
-			Usage:       "also show hidden instances, overrides --hidden-only",
+			Usage:       "also show hidden instances, overrides --hidden-only, but not --regex",
 			Destination: &showAll,
 		},
 		cli.BoolFlag{
@@ -54,8 +58,29 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			Usage:       "show only hidden instances",
 			Destination: &showHiddenOnly,
 		},
+		cli.StringSliceFlag{
+			Name:  "regex",
+			Usage: "show instance with the name matching regex",
+		},
+		cli.BoolFlag{
+			Name:        "hosts",
+			Usage:       "print host names and IP addresses for /etc/hosts",
+			Destination: &makeHosts,
+		},
+		cli.BoolFlag{
+			Name:        "private",
+			Usage:       "print private IP address when --hosts",
+			Destination: &usePrivateIPAddr,
+		},
 	},
 	Action: func(c *cli.Context) {
+		for _, regex := range c.StringSlice("regex") {
+			re, err := regexp.Compile(regex)
+			if err != nil {
+				exit(err)
+			}
+			matchRegexes = append(matchRegexes, re)
+		}
 		if c.Args().Present() {
 			ForAllArgsDo([]string(c.Args()), func(arg string) {
 				Print(ECS_INSTANCE.DescribeInstanceAttributeById(arg))
@@ -64,7 +89,10 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			Print(ECS_INSTANCE.DescribeInstances())
 		}
 	},
-	BashComplete: describeInstancesForBashComplete(nil),
+	BashComplete: func(c *cli.Context) {
+		printFlagsForCommand(c, "list-instances")
+		describeInstancesForBashComplete(nil)(c)
+	},
 }
 
 func (ecs *ECS) DescribeInstances() (instances ECSInstances, err error) {
@@ -93,6 +121,24 @@ func (instances ECSInstances) Print() {
 }
 
 func (instances ECSInstances) PrintTable() {
+	if makeHosts {
+		PrintTable([]interface{}{"# IP Address", "Name"}, len(instances), func(i int) []interface{} {
+			instance := instances[i]
+			if !shouldShow(instance) {
+				return nil
+			}
+			ipAddr := instance.InnerIpAddress.GetIPAddress(0)
+			if !usePrivateIPAddr {
+				ipAddr = instance.PublicIpAddress.GetIPAddress(0)
+			}
+			if ipAddr == "" {
+				return nil
+			}
+			return []interface{}{ipAddr, instance.InstanceName}
+		})
+		return
+	}
+
 	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", "Type", "Region/Zone", "Created At"}
 	PrintTable(fields, len(instances), func(i int) []interface{} {
 		instance := instances[i]
@@ -120,15 +166,19 @@ func dateStr(input string) (output string) {
 	return
 }
 
-func shouldShow(instance ECSInstance) bool {
-	if showAll {
-		return true
-	} else {
-		isHidden := strings.Contains(instance.Description, "[HIDE]")
-		if showHiddenOnly {
-			return isHidden
-		} else {
-			return !isHidden
-		}
+func shouldShow(instance ECSInstance) (shouldShow bool) {
+	shouldShow = true
+
+	if !showAll && strings.Contains(instance.Description, "[HIDE]") {
+		shouldShow = false
 	}
+
+	for _, regex := range matchRegexes {
+		if regex.MatchString(instance.InstanceName) {
+			continue
+		}
+		shouldShow = false
+	}
+
+	return
 }

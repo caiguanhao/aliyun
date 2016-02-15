@@ -23,6 +23,11 @@ import (
 const TIME_FORMAT = "2006-01-02T15:04:05Z"
 const YMD_HMS_FORMAT = "2006-01-02 15:04:05"
 
+func exit(msg ...interface{}) {
+	fmt.Fprintln(os.Stderr, msg...)
+	os.Exit(1)
+}
+
 func sign(secret string, query string) string {
 	mac := hmac.New(sha1.New, []byte(secret+"&"))
 	mac.Write([]byte("GET&%2F&" + query))
@@ -193,8 +198,7 @@ func Print(printable ECSInterface, others ...interface{}) {
 			printable.PrintTable()
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		exit(err)
 	}
 }
 
@@ -335,8 +339,7 @@ func ensureInstanceOfTheSameNameDoesNotExist(name string) {
 	instances, _ := ECS_INSTANCE.DescribeInstances()
 	for _, instance := range instances {
 		if instance.InstanceName == name {
-			fmt.Fprintln(os.Stderr, "Instance of the same name already exists. Please choose a different name.")
-			os.Exit(1)
+			exit("Instance of the same name already exists. Please choose a different name.")
 		}
 	}
 }
