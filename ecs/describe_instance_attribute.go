@@ -80,6 +80,11 @@ func (instance ECSInstance) PrintTable() {
 	fmt.Printf(format, "ID", instance.InstanceId)
 	fmt.Printf(format, "Name", instance.InstanceName)
 	fmt.Printf(format, "Type", instance.InstanceType)
+	specs := (<-typesMapChan)[instance.InstanceType]
+	if specs == "" {
+		specs = "unknown"
+	}
+	fmt.Printf(format, "Specs", specs)
 	fmt.Printf(format, "Image", instance.ImageId)
 	fmt.Printf(format, "Status", instance.Status)
 	fmt.Printf(format, "Region", instance.RegionId)

@@ -67,7 +67,7 @@ func (types ECSInstanceTypes) PrintTable() {
 		return []interface{}{
 			itype.InstanceTypeId,
 			fmt.Sprintf("%d", itype.CpuCoreCount),
-			fmt.Sprintf("%.1f G", itype.MemorySize),
+			fmt.Sprintf("%.6g G", itype.MemorySize),
 		}
 	})
 }

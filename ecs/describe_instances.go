@@ -41,6 +41,9 @@ var showHiddenOnly bool
 var matchRegexes []*regexp.Regexp
 var makeHosts bool
 var usePrivateIPAddr bool
+var showRawType bool
+
+var typesMapChan chan map[string]string = make(chan map[string]string)
 
 var DESCRIBE_INSTANCES cli.Command = cli.Command{
 	Name:      "list-instances",
@@ -72,6 +75,11 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			Usage:       "print private IP address when --hosts",
 			Destination: &usePrivateIPAddr,
 		},
+		cli.BoolFlag{
+			Name:        "raw-type",
+			Usage:       "show raw instance type instead of specs",
+			Destination: &showRawType,
+		},
 	},
 	Action: func(c *cli.Context) {
 		for _, regex := range c.StringSlice("regex") {
@@ -81,6 +89,16 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			}
 			matchRegexes = append(matchRegexes, re)
 		}
+		go func() {
+			typesMap := map[string]string{}
+			if !showRawType {
+				types, _, _ := ECS_INSTANCE.DescribeInstanceTypes()
+				for _, _type := range types {
+					typesMap[_type.InstanceTypeId] = fmt.Sprintf("%d CPU, %.6gG Mem", _type.CpuCoreCount, _type.MemorySize)
+				}
+			}
+			typesMapChan <- typesMap
+		}()
 		if c.Args().Present() {
 			ForAllArgsDo([]string(c.Args()), func(arg string) {
 				Print(ECS_INSTANCE.DescribeInstanceAttributeById(arg))
@@ -121,6 +139,8 @@ func (instances ECSInstances) Print() {
 }
 
 func (instances ECSInstances) PrintTable() {
+	typesMap := <-typesMapChan
+
 	if makeHosts {
 		PrintTable([]interface{}{"# IP Address", "Name"}, len(instances), func(i int) []interface{} {
 			instance := instances[i]
@@ -139,11 +159,20 @@ func (instances ECSInstances) PrintTable() {
 		return
 	}
 
-	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", "Type", "Region/Zone", "Created At"}
+	specsOrType := "Specs"
+	if showRawType {
+		specsOrType = "Type"
+	}
+
+	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", specsOrType, "Region/Zone", "Created At"}
 	PrintTable(fields, len(instances), func(i int) []interface{} {
 		instance := instances[i]
 		if !shouldShow(instance) {
 			return nil
+		}
+		specsOrType := instance.InstanceType
+		if !showRawType {
+			specsOrType = typesMap[instance.InstanceType]
 		}
 		return []interface{}{
 			instance.InstanceId,
@@ -151,7 +180,7 @@ func (instances ECSInstances) PrintTable() {
 			instance.Status,
 			instance.PublicIpAddress.GetIPAddress(0),
 			instance.InnerIpAddress.GetIPAddress(0),
-			instance.InstanceType,
+			specsOrType,
 			instance.ZoneId,
 			dateStr(instance.CreationTime),
 		}
