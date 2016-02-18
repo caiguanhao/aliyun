@@ -87,7 +87,7 @@ func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
 	}
 
 	client := http.Client{
-		Timeout: time.Duration(2 * time.Second),
+		Timeout: time.Duration(3 * time.Second),
 	}
 	res, err := client.Get(url)
 	if err != nil {
@@ -180,12 +180,16 @@ type ECSInterface interface {
 	Print()
 }
 
+func getFirstPart(input string) string {
+	if strings.Contains(input, "@") {
+		input = input[:strings.Index(input, "@")]
+	}
+	return input
+}
+
 func ForAllArgsDo(args []string, call func(arg string)) {
 	for _, arg := range args {
-		if strings.Contains(arg, "@") {
-			arg = arg[:strings.Index(arg, "@")]
-		}
-		call(arg)
+		call(getFirstPart(arg))
 	}
 }
 
@@ -280,7 +284,7 @@ func hintsForBashComplete(c *cli.Context, flagName *string) {
 	} else if *flagName == "type" {
 		types, _, _ := ECS_INSTANCE.DescribeInstanceTypes()
 		for _, _type := range types {
-			fmt.Println(_type.InstanceTypeId)
+			fmt.Printf("%s@%dCPU,%.6gGMem\n", _type.InstanceTypeId, _type.CpuCoreCount, _type.MemorySize)
 		}
 	} else if *flagName == "zone" {
 		region := c.String("region")

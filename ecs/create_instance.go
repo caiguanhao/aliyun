@@ -80,7 +80,7 @@ var CREATE_INSTANCE cli.Command = cli.Command{
 		}
 		params := map[string]string{
 			"ImageId":                 c.String("image"),
-			"InstanceType":            c.String("type"),
+			"InstanceType":            getFirstPart(c.String("type")),
 			"SecurityGroupId":         c.String("group"),
 			"InstanceName":            c.String("name"),
 			"HostName":                host,
