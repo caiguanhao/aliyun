@@ -72,17 +72,22 @@ func (images ECSImages) Print() {
 }
 
 func (images ECSImages) PrintTable() {
-	fields := []interface{}{"ID", "Owner", "Name"}
-	PrintTable(fields, len(images), func(i int) []interface{} {
-		image := images[i]
-		name := image.ImageName
-		if name == image.ImageId {
-			name = "-"
-		}
-		return []interface{}{
-			image.ImageId,
-			image.ImageOwnerAlias,
-			name,
-		}
-	})
+	PrintTable(
+		/* fields     */ []interface{}{"ID", "Owner", "Name"},
+		/* showFields */ true,
+		/* listLength */ len(images),
+		/* filter     */ nil,
+		/* getInfo    */ func(i int) map[interface{}]interface{} {
+			image := images[i]
+			name := image.ImageName
+			if name == image.ImageId {
+				name = "-"
+			}
+			return map[interface{}]interface{}{
+				"ID":    image.ImageId,
+				"Name":  name,
+				"Owner": image.ImageOwnerAlias,
+			}
+		},
+	)
 }

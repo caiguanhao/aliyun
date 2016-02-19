@@ -38,6 +38,7 @@ type DescribeInstances struct {
 
 var showAll bool
 var showHiddenOnly bool
+var customFields []interface{}
 var matchRegexes []*regexp.Regexp
 var makeHosts bool
 var usePrivateIPAddr bool
@@ -60,6 +61,10 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 			Name:        "hidden-only, H",
 			Usage:       "show only hidden instances",
 			Destination: &showHiddenOnly,
+		},
+		cli.StringSliceFlag{
+			Name:  "field, f",
+			Usage: "show specified fields only",
 		},
 		cli.StringSliceFlag{
 			Name:  "regex",
@@ -88,6 +93,9 @@ var DESCRIBE_INSTANCES cli.Command = cli.Command{
 				exit(err)
 			}
 			matchRegexes = append(matchRegexes, re)
+		}
+		for _, field := range c.StringSlice("field") {
+			customFields = append(customFields, field)
 		}
 		go func() {
 			typesMap := map[string]string{}
@@ -141,50 +149,60 @@ func (instances ECSInstances) Print() {
 func (instances ECSInstances) PrintTable() {
 	typesMap := <-typesMapChan
 
+	var fields []interface{}
+	var showFields bool
+
 	if makeHosts {
-		PrintTable([]interface{}{"# IP Address", "Name"}, len(instances), func(i int) []interface{} {
+		ipAddress := "Public IP"
+		if usePrivateIPAddr {
+			ipAddress = "Private IP"
+		}
+		fields = []interface{}{ipAddress, "Name"}
+		showFields = false
+	} else if len(customFields) > 0 {
+		fields = customFields
+		showFields = false
+	} else {
+		specsOrType := "Specs"
+		if showRawType {
+			specsOrType = "Type"
+		}
+		fields = []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", specsOrType, "Region/Zone", "Created At"}
+		showFields = true
+	}
+
+	PrintTable(
+		/* fields     */ fields,
+		/* showFields */ showFields,
+		/* listLength */ len(instances),
+		/* filter     */ func(i int) bool {
 			instance := instances[i]
-			if !shouldShow(instance) {
-				return nil
+			if makeHosts {
+				ipAddr := instance.InnerIpAddress.GetIPAddress(0)
+				if !usePrivateIPAddr {
+					ipAddr = instance.PublicIpAddress.GetIPAddress(0)
+				}
+				if ipAddr == "" {
+					return false
+				}
 			}
-			ipAddr := instance.InnerIpAddress.GetIPAddress(0)
-			if !usePrivateIPAddr {
-				ipAddr = instance.PublicIpAddress.GetIPAddress(0)
+			return shouldShow(instance)
+		},
+		/* getInfo    */ func(i int) map[interface{}]interface{} {
+			instance := instances[i]
+			return map[interface{}]interface{}{
+				"ID":          instance.InstanceId,
+				"Name":        instance.InstanceName,
+				"Status":      instance.Status,
+				"Public IP":   instance.PublicIpAddress.GetIPAddress(0),
+				"Private IP":  instance.InnerIpAddress.GetIPAddress(0),
+				"Specs":       typesMap[instance.InstanceType],
+				"Type":        instance.InstanceType,
+				"Region/Zone": instance.ZoneId,
+				"Created At":  dateStr(instance.CreationTime),
 			}
-			if ipAddr == "" {
-				return nil
-			}
-			return []interface{}{ipAddr, instance.InstanceName}
-		})
-		return
-	}
-
-	specsOrType := "Specs"
-	if showRawType {
-		specsOrType = "Type"
-	}
-
-	fields := []interface{}{"ID", "Name", "Status", "Public IP", "Private IP", specsOrType, "Region/Zone", "Created At"}
-	PrintTable(fields, len(instances), func(i int) []interface{} {
-		instance := instances[i]
-		if !shouldShow(instance) {
-			return nil
-		}
-		specsOrType := instance.InstanceType
-		if !showRawType {
-			specsOrType = typesMap[instance.InstanceType]
-		}
-		return []interface{}{
-			instance.InstanceId,
-			instance.InstanceName,
-			instance.Status,
-			instance.PublicIpAddress.GetIPAddress(0),
-			instance.InnerIpAddress.GetIPAddress(0),
-			specsOrType,
-			instance.ZoneId,
-			dateStr(instance.CreationTime),
-		}
-	})
+		},
+	)
 }
 
 func dateStr(input string) (output string) {

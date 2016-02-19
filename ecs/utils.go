@@ -206,18 +206,27 @@ func Print(printable ECSInterface, others ...interface{}) {
 	}
 }
 
-func PrintTable(fields []interface{}, length int, process func(i int) []interface{}) {
-	maxlengths := make([]interface{}, len(fields))
+func PrintTable(
+	fields []interface{},
+	showFields bool,
+	listLength int,
+	filter func(i int) bool,
+	getInfo func(i int) map[interface{}]interface{},
+) {
+	fieldsLen := len(fields)
+	maxlengths := make([]interface{}, fieldsLen)
 	for i, field := range fields {
 		maxlengths[i] = len(field.(string))
 	}
 	var lines [][]interface{}
-	for i := 0; i < length; i++ {
-		line := process(i)
-		if line == nil {
+	for i := 0; i < listLength; i++ {
+		if filter != nil && filter(i) != true {
 			continue
 		}
-		for j := 0; j < len(fields); j++ {
+		info := getInfo(i)
+		line := make([]interface{}, fieldsLen)
+		for j, field := range fields {
+			line[j] = info[field]
 			l := len(line[j].(string))
 			if l > maxlengths[j].(int) {
 				maxlengths[j] = l
@@ -225,8 +234,10 @@ func PrintTable(fields []interface{}, length int, process func(i int) []interfac
 		}
 		lines = append(lines, line)
 	}
-	format := fmt.Sprintf(strings.TrimSpace(strings.Repeat("%%-%ds  ", len(fields)))+"\n", maxlengths...)
-	fmt.Printf(format, fields...)
+	format := fmt.Sprintf(strings.TrimSpace(strings.Repeat("%%-%ds  ", fieldsLen))+"\n", maxlengths...)
+	if showFields {
+		fmt.Printf(format, fields...)
+	}
 	for _, line := range lines {
 		fmt.Printf(format, line...)
 	}

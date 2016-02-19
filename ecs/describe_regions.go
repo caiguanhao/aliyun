@@ -150,12 +150,17 @@ func (regionsNzones ECSRegionsAndZones) Print() {
 }
 
 func (regionsNzones ECSRegionsAndZones) PrintTable() {
-	fields := []interface{}{"Region", "Available Zones"}
-	PrintTable(fields, len(regionsNzones), func(i int) []interface{} {
-		rNz := regionsNzones[i]
-		return []interface{}{
-			rNz.RegionName,
-			strings.Join(rNz.Zones, ", "),
-		}
-	})
+	PrintTable(
+		/* fields     */ []interface{}{"Region", "Available Zones"},
+		/* showFields */ true,
+		/* listLength */ len(regionsNzones),
+		/* filter     */ nil,
+		/* getInfo    */ func(i int) map[interface{}]interface{} {
+			rNz := regionsNzones[i]
+			return map[interface{}]interface{}{
+				"Region":          rNz.RegionName,
+				"Available Zones": strings.Join(rNz.Zones, ", "),
+			}
+		},
+	)
 }

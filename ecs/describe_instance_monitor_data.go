@@ -90,15 +90,20 @@ func (data ECSInstanceMonitorData) Print() {
 }
 
 func (data ECSInstanceMonitorData) PrintTable() {
-	fields := []interface{}{"Time", "CPU Usage", "Received", "Sent"}
-	PrintTable(fields, len(data), func(i int) []interface{} {
-		datum := data[i]
-		t, _ := time.Parse(TIME_FORMAT, datum.TimeStamp)
-		return []interface{}{
-			t.Local().Format(YMD_HMS_FORMAT),
-			fmt.Sprintf("%d%%", datum.CPU),
-			fmt.Sprintf("%d KB/s", datum.InternetRX/8/period),
-			fmt.Sprintf("%d KB/s", datum.InternetTX/8/period),
-		}
-	})
+	PrintTable(
+		/* fields     */ []interface{}{"Time", "CPU Usage", "Received", "Sent"},
+		/* showFields */ true,
+		/* listLength */ len(data),
+		/* filter     */ nil,
+		/* getInfo    */ func(i int) map[interface{}]interface{} {
+			datum := data[i]
+			t, _ := time.Parse(TIME_FORMAT, datum.TimeStamp)
+			return map[interface{}]interface{}{
+				"Time":      t.Local().Format(YMD_HMS_FORMAT),
+				"CPU Usage": fmt.Sprintf("%d%%", datum.CPU),
+				"Received":  fmt.Sprintf("%d KB/s", datum.InternetRX/8/period),
+				"Sent":      fmt.Sprintf("%d KB/s", datum.InternetTX/8/period),
+			}
+		},
+	)
 }

@@ -67,13 +67,18 @@ func (groups ECSSecurityGroups) Print() {
 }
 
 func (groups ECSSecurityGroups) PrintTable() {
-	fields := []interface{}{"ID", "Description", "Region"}
-	PrintTable(fields, len(groups), func(i int) []interface{} {
-		group := groups[i]
-		return []interface{}{
-			group.SecurityGroupId,
-			group.Description,
-			group.regionId,
-		}
-	})
+	PrintTable(
+		/* fields     */ []interface{}{"ID", "Description", "Region"},
+		/* showFields */ true,
+		/* listLength */ len(groups),
+		/* filter     */ nil,
+		/* getInfo    */ func(i int) map[interface{}]interface{} {
+			group := groups[i]
+			return map[interface{}]interface{}{
+				"ID":          group.SecurityGroupId,
+				"Description": group.Description,
+				"Region":      group.regionId,
+			}
+		},
+	)
 }

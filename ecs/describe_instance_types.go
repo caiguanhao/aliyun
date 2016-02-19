@@ -61,13 +61,18 @@ func (types ECSInstanceTypes) Print() {
 }
 
 func (types ECSInstanceTypes) PrintTable() {
-	fields := []interface{}{"Name", "CPU Core", "Memory"}
-	PrintTable(fields, len(types), func(i int) []interface{} {
-		itype := types[i]
-		return []interface{}{
-			itype.InstanceTypeId,
-			fmt.Sprintf("%d", itype.CpuCoreCount),
-			fmt.Sprintf("%.6g G", itype.MemorySize),
-		}
-	})
+	PrintTable(
+		/* fields     */ []interface{}{"Name", "CPU Core", "Memory"},
+		/* showFields */ true,
+		/* listLength */ len(types),
+		/* filter     */ nil,
+		/* getInfo    */ func(i int) map[interface{}]interface{} {
+			itype := types[i]
+			return map[interface{}]interface{}{
+				"Name":     itype.InstanceTypeId,
+				"CPU Core": fmt.Sprintf("%d", itype.CpuCoreCount),
+				"Memory":   fmt.Sprintf("%.6g G", itype.MemorySize),
+			}
+		},
+	)
 }
