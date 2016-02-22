@@ -63,29 +63,10 @@ func buildQueryString(input map[string]string) string {
 	return queryString
 }
 
-func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
-	params := map[string]string{
-		"Format":           "JSON",
-		"Version":          "2014-05-26",
-		"AccessKeyId":      ecs.KEY,
-		"SignatureMethod":  "HMAC-SHA1",
-		"SignatureVersion": "1.0",
-		"SignatureNonce":   randomString(64),
-		"Timestamp":        time.Now().UTC().Format(TIME_FORMAT),
-		"PageSize":         "50",
-		"PageNumber":       "1",
-	}
-	for k, v := range queries {
-		params[k] = v
-	}
-	query := buildQueryString(params)
-	signature := sign(ecs.SECRET, urlEncode(query))
-	url := fmt.Sprintf("http://ecs.aliyuncs.com/?%s&Signature=%s", query, urlEncode(signature))
-
+func Request(url string, target interface{}) error {
 	if IsVerbose {
 		fmt.Println(url)
 	}
-
 	client := http.Client{
 		Timeout: time.Duration(3 * time.Second),
 	}
@@ -147,6 +128,27 @@ func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (ecs *ECS) Request(queries map[string]string, target interface{}) error {
+	params := map[string]string{
+		"Format":           "JSON",
+		"Version":          "2014-05-26",
+		"AccessKeyId":      ecs.KEY,
+		"SignatureMethod":  "HMAC-SHA1",
+		"SignatureVersion": "1.0",
+		"SignatureNonce":   randomString(64),
+		"Timestamp":        time.Now().UTC().Format(TIME_FORMAT),
+		"PageSize":         "50",
+		"PageNumber":       "1",
+	}
+	for k, v := range queries {
+		params[k] = v
+	}
+	query := buildQueryString(params)
+	signature := sign(ecs.SECRET, urlEncode(query))
+	url := fmt.Sprintf("http://ecs.aliyuncs.com/?%s&Signature=%s", query, urlEncode(signature))
+	return Request(url, target)
 }
 
 func ForAllRegionsDo(do func(region string) (err error)) (err error) {

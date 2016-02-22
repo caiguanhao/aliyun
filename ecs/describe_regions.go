@@ -14,6 +14,8 @@ type ECSRegion struct {
 
 var showZonesOnly bool
 
+var regionAvailabilityChan chan func(string) bool = make(chan func(string) bool)
+
 var DESCRIBE_REGIONS cli.Command = cli.Command{
 	Name:      "list-regions",
 	Aliases:   []string{"regions", "n"},
@@ -27,6 +29,9 @@ var DESCRIBE_REGIONS cli.Command = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) {
+		go func() {
+			regionAvailabilityChan <- getRegionAvailability()
+		}()
 		Print(ECS_INSTANCE.DescribeRegionsAndZones())
 	},
 }
@@ -150,16 +155,22 @@ func (regionsNzones ECSRegionsAndZones) Print() {
 }
 
 func (regionsNzones ECSRegionsAndZones) PrintTable() {
+	isAvailable := <-regionAvailabilityChan
 	PrintTable(
-		/* fields     */ []interface{}{"Region", "Available Zones"},
+		/* fields     */ []interface{}{"Region", "Available", "Zones"},
 		/* showFields */ true,
 		/* listLength */ len(regionsNzones),
 		/* filter     */ nil,
 		/* getInfo    */ func(i int) map[interface{}]interface{} {
 			rNz := regionsNzones[i]
+			available := "No"
+			if isAvailable(rNz.RegionName) {
+				available = "Yes"
+			}
 			return map[interface{}]interface{}{
-				"Region":          rNz.RegionName,
-				"Available Zones": strings.Join(rNz.Zones, ", "),
+				"Region":    rNz.RegionName,
+				"Available": available,
+				"Zones":     strings.Join(rNz.Zones, ", "),
 			}
 		},
 	)
