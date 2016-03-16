@@ -3,7 +3,7 @@
 set -e
 
 if test -z "$PROJECTS"; then
-  PROJECTS="ecs oss oss-diff oss-get"
+  PROJECTS="ecs oss"
 fi
 
 function str_to_array {
