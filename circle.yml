@@ -1,5 +1,7 @@
 checkout:
   post:
+    - mkdir -p /usr/local/go/src/github.com/caiguanhao
+    - ln -nfs $PWD /usr/local/go/src/github.com/caiguanhao/aliyun
     - git submodule init
     - git submodule update
 test:
