@@ -126,14 +126,14 @@ func (signature *Signature) Get() string {
 		signature.Date,
 		fmt.Sprintf("/%s%s", bucket, signature.URI),
 	}, "\n")
-	mac := hmac.New(sha1.New, []byte(SECRET))
+	mac := hmac.New(sha1.New, []byte(accessSecret))
 	mac.Write([]byte(msg))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func (signature *Signature) SetRequest(req *http.Request) {
 	sign := signature.Get()
-	req.Header.Set("Authorization", fmt.Sprintf("OSS %s:%s", KEY, sign))
+	req.Header.Set("Authorization", fmt.Sprintf("OSS %s:%s", accessKey, sign))
 	if signature.MD5Sum != "" {
 		req.Header.Set("Content-MD5", signature.MD5Sum)
 	}

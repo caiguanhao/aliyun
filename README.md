@@ -8,7 +8,7 @@ Command-line tool for [Aliyun Cloud Services](http://www.aliyun.com/product/).
 USAGE
 -----
 
-ECS:
+### ECS
 
 ```help
 NAME:
@@ -43,55 +43,33 @@ GLOBAL OPTIONS:
    --version, -v	print the version
 ```
 
-To upload files:
+### OSS
 
 ```help
-oss [OPTION] SOURCE ... TARGET
+NAME:
+   oss - control Aliyun OSS
 
-Options:
-    -c <num>   Specify how many files to process concurrently, default is 2, max is 10
+USAGE:
+   oss [global options] command [command options] [arguments...]
 
-    -b <name>  Specify bucket other than: my-bucket
-    -z <url>   Specify API URL prefix other than: https://%s.oss-cn-hangzhou.aliyuncs.com
-       You can use custom domain or official URL like this:
-       {http, https}://%s.oss-cn-{beijing, hangzhou, hongkong, qingdao, shenzhen}{, -internal}.aliyuncs.com
-       Note: %s will be replaced with the bucket name if specified
+VERSION:
+   1.0.0
 
-    --parents  Use full source file name under TARGET
+COMMANDS:
+   upload, up, u, put           upload local files to remote OSS
+   download, down, dl, d, get   get remote OSS files to local
+   diff                         show different files on local and remote OSS
 
-    -v  Be verbosive
-    -d  Dry-run. See list of files that will be transferred,
-        show full URL if -v is also set
-
-Built with key ID abcdefghijklmnop on 2015-08-19 11:08:01 (8b72aaf)
-API: https://my-bucket.oss-cn-hangzhou.aliyuncs.com
-Source: https://github.com/caiguanhao/aliyun
-```
-
-To get list of different files:
-
-```help
-oss-diff [OPTION] LOCAL-DIR  REMOTE-DIR
-                  LOCAL-FILE REMOTE-FILE
-
-Options:
-    -r, --reverse  Print LOCAL file paths to stderr, REMOTE to stdout
-
-    -m, --md5      Verify MD5 checksum besides file name and size
-    -s, --shhh     Show only file path
-
-Status code: 0 - local and remote are identical
-             1 - local has different files
-             2 - remote has different files
-             3 - both local and remote have different files
-```
-
-To get a file from OSS:
-
-```help
-oss-get [--curl] REMOTE-FILE [LOCAL-FILE]
-
-    --curl    generate curl script
+GLOBAL OPTIONS:
+   --bucket, -b "xxxxxxxxx"                                     bucket name
+   --prefix, -p "https://%s.oss-cn-hangzhou.aliyuncs.com"       API prefix
+   --key "xxxxxxxxxxxxxxxx"                                     access key [$ACCESS_KEY]
+   --secret                                                     access key secret [$ACCESS_SECRET]
+   --concurrency, -c "4"                                        job concurrency, defaults to number of CPU (4), max is 16
+   --dry-run, -D                                                do not actually run
+   --verbose, -V                                                show more info
+   --generate-bash-completion
+   --version, -v                                                print the version
 ```
 
 BUILD

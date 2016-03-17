@@ -144,7 +144,7 @@ func getDownloadUrl(remote string, secondsFromNow int64) string {
 	date := time.Now().Unix() + secondsFromNow
 	signature := (&Signature{Date: fmt.Sprintf("%d", date), URI: remote}).Get()
 	url := fmt.Sprintf("%s/%s?OSSAccessKeyId=%s&Expires=%d&Signature=%s",
-		api, url.QueryEscape(strings.TrimLeft(remote, "/")), KEY, date, url.QueryEscape(signature))
+		api, url.QueryEscape(strings.TrimLeft(remote, "/")), accessKey, date, url.QueryEscape(signature))
 	return url
 }
 

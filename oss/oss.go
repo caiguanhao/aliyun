@@ -12,6 +12,8 @@ import (
 var api string
 var bucket string
 var prefix string
+var accessKey string
+var accessSecret string
 var concurrency int
 var dryrun bool
 var verbose bool
@@ -37,17 +39,32 @@ func main() {
 		cli.StringFlag{
 			Name:        "bucket, b",
 			Usage:       "bucket name",
+			Value:       DEFAULT_BUCKET,
 			Destination: &bucket,
 		},
 		cli.StringFlag{
 			Name:        "prefix, p",
 			Usage:       "API prefix",
+			Value:       DEFAULT_API_PREFIX,
 			Destination: &prefix,
+		},
+		cli.StringFlag{
+			Name:        "key",
+			Usage:       "access key",
+			Value:       KEY,
+			EnvVar:      "ACCESS_KEY",
+			Destination: &accessKey,
+		},
+		cli.StringFlag{
+			Name:        "secret",
+			Usage:       "access key secret",
+			EnvVar:      "ACCESS_SECRET",
+			Destination: &accessSecret,
 		},
 		cli.IntFlag{
 			Name:        "concurrency, c",
 			Value:       NUM_CPU,
-			Usage:       fmt.Sprintf("job concurrency, defaults to number of CPU (%d)", NUM_CPU),
+			Usage:       fmt.Sprintf("job concurrency, defaults to number of CPU (%d), max is 16", NUM_CPU),
 			Destination: &concurrency,
 		},
 		cli.BoolFlag{
@@ -71,9 +88,10 @@ func main() {
 			}
 		}
 	}
-	app.Before = func(context *cli.Context) error {
-		prefix = DEFAULT_API_PREFIX
-		bucket = DEFAULT_BUCKET
+	app.Before = func(c *cli.Context) error {
+		if !c.GlobalIsSet("secret") {
+			accessSecret = SECRET
+		}
 
 		if concurrency < 1 || concurrency > 16 {
 			concurrency = NUM_CPU
