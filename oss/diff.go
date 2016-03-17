@@ -2,11 +2,9 @@ package main
 
 import (
 	"crypto/md5"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,25 +12,6 @@ import (
 
 	"github.com/caiguanhao/aliyun/vendor/cli"
 )
-
-type OSSFileList struct {
-	Name        string
-	Prefix      string
-	Marker      string
-	MaxKeys     int
-	Delimiter   string
-	IsTruncated bool
-	NextMarker  string
-	Files       []OSSFile `xml:"Contents"`
-}
-
-type OSSFile struct {
-	Name         string `xml:"Key"`
-	LastModified string
-	ETag         string
-	Size         int64
-	err          error
-}
 
 var OSS_DIFF cli.Command = cli.Command{
 	Name:      "diff",
@@ -67,7 +46,7 @@ var OSS_DIFF cli.Command = cli.Command{
 			func() {
 				timeStart := time.Now()
 				var err error
-				remoteFiles, err = getOSSFileList(remote)
+				remoteFiles, _, err = getOSSFileList(remote, true)
 				if err != nil {
 					die(err)
 				}
@@ -163,40 +142,6 @@ func parseArgsForOSSDiff(args []string) (local, remote string, localStrPos, remo
 	} else {
 		localStrPos, remoteStrPos = len(local), len(remote)
 	}
-	return
-}
-
-func getOSSFileListWithMarker(prefix string, marker *string, files *[]OSSFile) (err error) {
-	queryString := "?max-keys=1000&prefix=" + prefix
-	if marker != nil {
-		queryString += "&marker=" + *marker
-	}
-	var resp *http.Response
-	resp, err = sendGetRequest("/" + queryString)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = checkOSSResponse(resp)
-	if err != nil {
-		return
-	}
-	var list OSSFileList
-	if err = xml.NewDecoder(resp.Body).Decode(&list); err != nil {
-		return
-	}
-	*files = append(*files, list.Files...)
-	if verbose {
-		fmt.Fprintf(os.Stderr, "Remote: received %d file names (out of %d) ...\n", len(list.Files), len(*files))
-	}
-	if list.IsTruncated {
-		err = getOSSFileListWithMarker(prefix, &list.NextMarker, files)
-	}
-	return
-}
-
-func getOSSFileList(prefix string) (files []OSSFile, err error) {
-	err = getOSSFileListWithMarker(prefix, nil, &files)
 	return
 }
 

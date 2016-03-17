@@ -58,6 +58,7 @@ VERSION:
 COMMANDS:
    upload, up, u, put           upload local files to remote OSS
    download, down, dl, d, get   get remote OSS files to local
+   list, ls, l                  show list of files on remote OSS
    diff                         show different files on local and remote OSS
 
 GLOBAL OPTIONS:

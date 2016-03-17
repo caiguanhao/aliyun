@@ -33,6 +33,7 @@ func main() {
 	app.Commands = []cli.Command{
 		OSS_UPLOAD,
 		OSS_DOWNLOAD,
+		OSS_LIST,
 		OSS_DIFF,
 	}
 	app.Flags = []cli.Flag{
