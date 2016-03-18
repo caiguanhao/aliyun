@@ -6,7 +6,7 @@ ecs:
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
-    - './ecs:/go/src/github.com/caiguanhao/aliyun/ecs'
+    - '.:/go/src/github.com/caiguanhao/aliyun'
 
 oss:
   image: golang:1.5.0
@@ -18,28 +18,4 @@ oss:
     - ALIYUN_ACCESS_KEY
     - ALIYUN_ACCESS_SECRET
   volumes:
-    - './oss:/go/src/github.com/caiguanhao/aliyun/oss'
-
-oss-diff:
-  image: golang:1.5.0
-  command: ["go", "build"]
-  working_dir: '/go/src/github.com/caiguanhao/aliyun/oss-diff'
-  environment:
-    - API_PREFIX
-    - BUCKET
-    - ALIYUN_ACCESS_KEY
-    - ALIYUN_ACCESS_SECRET
-  volumes:
-    - './oss-diff:/go/src/github.com/caiguanhao/aliyun/oss-diff'
-
-oss-get:
-  image: golang:1.5.0
-  command: ["go", "build"]
-  working_dir: '/go/src/github.com/caiguanhao/aliyun/oss-get'
-  environment:
-    - API_PREFIX
-    - BUCKET
-    - ALIYUN_ACCESS_KEY
-    - ALIYUN_ACCESS_SECRET
-  volumes:
-    - './oss-get:/go/src/github.com/caiguanhao/aliyun/oss-get'
+    - '.:/go/src/github.com/caiguanhao/aliyun'
