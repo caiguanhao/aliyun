@@ -9,7 +9,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -170,51 +169,6 @@ func (stat *Stat) String() *string {
 	return &summary
 }
 
-type Reader struct {
-	Reader io.Reader
-	Size   int64
-
-	read int64
-	last time.Time
-
-	lread int64
-	llast time.Time
-	speed string
-
-	maxlen int
-}
-
-func (r *Reader) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	r.read += int64(n)
-	now := time.Now()
-	timediff := float64(now.Sub(r.last).Nanoseconds()) / 1e9
-	ltimediff := float64(now.Sub(r.llast).Nanoseconds()) / 1e9
-	if ltimediff > 1 {
-		r.speed = humanBytes(float64(r.read-r.lread) / ltimediff)
-		r.lread = r.read
-		r.llast = now
-	}
-	if timediff > 0.1 {
-		line := fmt.Sprintf(
-			"Overall: %s / %s (%.3f%%), %s/s",
-			humanBytes(float64(r.read)),
-			humanBytes(float64(r.Size)),
-			float64(r.read)/float64(r.Size)*100,
-			r.speed,
-		)
-		l := len(line)
-		if l < r.maxlen {
-			line += strings.Repeat(" ", r.maxlen-l)
-		}
-		r.last = now
-		r.maxlen = l
-		fmt.Fprint(os.Stderr, line)
-		fmt.Fprint(os.Stderr, "\r")
-	}
-	return
-}
-
 func md5hash(file []byte) []byte {
 	md5sum := md5.New()
 	md5sum.Write(file)
@@ -271,7 +225,7 @@ func checkOSSResponse(resp *http.Response) (err error) {
 }
 
 func fmtFloat(float float64, suffix string) string {
-	return strings.TrimSuffix(fmt.Sprintf("%.3f", float), ".") + suffix
+	return strings.TrimSuffix(strings.TrimRight(fmt.Sprintf("%.3f", float), "0"), ".") + suffix
 }
 
 func humanBytes(bytes float64) string {
