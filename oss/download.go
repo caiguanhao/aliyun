@@ -182,7 +182,7 @@ func remoteFileToLocalFile(remote, local string) (written int64, err error) {
 	defer file.Close()
 	if err == nil {
 		debugf("Downloading %s to %s ...\n", remote, local)
-		written, err = io.Copy(file, resp.Body)
+		written, err = io.Copy(file, &Reader{Reader: resp.Body, Size: resp.ContentLength})
 		debugf("Downloaded %s to %s ...\n", remote, local)
 	}
 	return
