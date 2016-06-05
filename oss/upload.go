@@ -81,7 +81,7 @@ var OSS_UPLOAD cli.Command = cli.Command{
 								return nil
 							}
 							select {
-							case *jobs <- []string{local, localDirectoryToRemotePath(local, path, remote, parentsPath)}:
+							case *jobs <- []string{path, localDirectoryToRemotePath(local, path, remote, parentsPath)}:
 							case <-*done:
 								return errors.New("walk canceled")
 							}
