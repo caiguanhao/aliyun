@@ -1,5 +1,5 @@
 ecs:
-  image: golang:1.5.0
+  image: golang:1.6.2
   command: ["go", "build"]
   working_dir: '/go/src/github.com/caiguanhao/aliyun/ecs'
   environment:
@@ -9,7 +9,7 @@ ecs:
     - '.:/go/src/github.com/caiguanhao/aliyun'
 
 oss:
-  image: golang:1.5.0
+  image: golang:1.6.2
   command: ["go", "build"]
   working_dir: '/go/src/github.com/caiguanhao/aliyun/oss'
   environment:
