@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 type ECSRegion struct {

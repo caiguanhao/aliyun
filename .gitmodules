@@ -1,3 +1,0 @@
-[submodule "vendor/cli"]
-	path = vendor/cli
-	url = https://github.com/codegangsta/cli

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 var OSS_UPLOAD cli.Command = cli.Command{

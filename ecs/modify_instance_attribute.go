@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 type ModifyInstanceAttribute struct {

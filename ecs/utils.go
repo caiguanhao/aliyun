@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/caiguanhao/aliyun/ecs/errors"
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 const TIME_FORMAT = "2006-01-02T15:04:05Z"

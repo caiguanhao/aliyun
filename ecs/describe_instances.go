@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 const instanceDateTimeFormat = "2006-01-02T15:04Z"

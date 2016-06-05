@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 type AllocatePublicIpAddress struct {

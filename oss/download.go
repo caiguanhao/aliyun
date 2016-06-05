@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 var OSS_DOWNLOAD cli.Command = cli.Command{

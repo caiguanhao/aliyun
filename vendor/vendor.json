@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "kLaD7Wn764L6NKeg4ESHFssNs8E=",
+			"path": "github.com/codegangsta/cli",
+			"revision": "cf1f63a7274872768d4037305d572b70b1199397",
+			"revisionTime": "2016-01-30T03:19:57Z"
+		}
+	],
+	"rootPath": "github.com/caiguanhao/aliyun"
+}

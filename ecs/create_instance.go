@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/caiguanhao/aliyun/ecs/errors"
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 type CreateInstance struct {

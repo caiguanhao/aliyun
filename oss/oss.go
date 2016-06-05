@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 var api string

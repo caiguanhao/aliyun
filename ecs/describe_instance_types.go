@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 type ECSInstanceType struct {

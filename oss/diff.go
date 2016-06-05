@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 var OSS_DIFF cli.Command = cli.Command{

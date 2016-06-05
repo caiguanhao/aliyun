@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/caiguanhao/aliyun/vendor/cli"
+	"github.com/codegangsta/cli"
 )
 
 type ECS struct {
