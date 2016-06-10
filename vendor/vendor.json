@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "kFiChYp66wWKB+OgQzRFPDaCQ9s=",
+			"path": "github.com/caiguanhao/gotogether",
+			"revision": "ffef76890598a0732d207e0a539c2c1ccab066ff",
+			"revisionTime": "2016-05-19T06:31:58Z"
+		},
+		{
 			"checksumSHA1": "kLaD7Wn764L6NKeg4ESHFssNs8E=",
 			"path": "github.com/codegangsta/cli",
 			"revision": "cf1f63a7274872768d4037305d572b70b1199397",

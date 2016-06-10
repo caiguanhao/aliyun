@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/caiguanhao/gotogether"
 	"github.com/codegangsta/cli"
 )
 
@@ -62,7 +63,7 @@ var OSS_UPLOAD cli.Command = cli.Command{
 
 		parentsPath := c.Bool("parents")
 
-		DoJobsConcurrently{
+		gotogether.Queue{
 			Concurrency: concurrency,
 			AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
 				localsMoreThanOne := len(locals) > 1
@@ -94,32 +95,22 @@ var OSS_UPLOAD cli.Command = cli.Command{
 				debug(*err)
 				totalErrors++
 			},
-			DoJob: func(job *interface{}) (rets []interface{}) {
+			DoJob: func(job *interface{}) (ret interface{}, _ error) {
 				paths := (*job).([]string)
 				if dryrun {
 					fmt.Println(paths[0], " -> ", paths[1])
-					return nil
-				}
-				ret, err := localFileToRemoteFile(paths[0], paths[1])
-				return []interface{}{*job, ret, err}
-			},
-			OnJobDone: func(ret *[]interface{}) {
-				if *ret == nil {
 					return
 				}
-				paths := (*ret)[0].([]string)
-				uploaded := (*ret)[1].(int64)
-				if (*ret)[2] != nil {
-					err := (*ret)[2].(error)
-					if err != nil {
-						debug(paths[1]+":", err)
-						totalErrors++
-						return
-					}
+				size, err := localFileToRemoteFile(paths[0], paths[1])
+				if err == nil {
+					stat.Add(size)
+				} else {
+					debug(paths[0], err)
+					totalErrors++
 				}
-				stat.Add(uploaded)
+				return
 			},
-		}.Now()
+		}.Run()
 	},
 }
 
@@ -189,7 +180,7 @@ func localReaderToRemoteFile(r io.Reader, remote string) (size int64, err error)
 func localBytesToRemoteFile(localFile []byte, remote string) (size int64, err error) {
 	var localFileMD5 []byte
 	var localMD5, remoteMD5 string
-	ParallelRun{
+	gotogether.Parallel{
 		func() {
 			localFileMD5 = md5hash(localFile)
 			localMD5 = fmt.Sprintf("%x", localFileMD5)
@@ -200,7 +191,7 @@ func localBytesToRemoteFile(localFile []byte, remote string) (size int64, err er
 				remoteMD5 = strings.ToLower(strings.Replace(etag, "\"", "", -1))
 			}
 		},
-	}.Now()
+	}.Run()
 	if localMD5 != "" && localMD5 == remoteMD5 {
 		fmt.Println(remote+":", "no changes, ignored")
 		return

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caiguanhao/gotogether"
 	"github.com/codegangsta/cli"
 )
 
@@ -42,7 +43,7 @@ var OSS_DIFF cli.Command = cli.Command{
 		var remoteFiles, localFiles []OSSFile
 		var localTimeUsed, remoteTimeUsed time.Duration
 
-		ParallelRun{
+		gotogether.Parallel{
 			func() {
 				timeStart := time.Now()
 				var err error
@@ -62,7 +63,7 @@ var OSS_DIFF cli.Command = cli.Command{
 				totalErrors += errs
 				localTimeUsed = time.Since(timeStart)
 			},
-		}.Now()
+		}.Run()
 
 		localFilesLength, remoteFilesLength := len(localFiles), len(remoteFiles)
 
@@ -146,7 +147,7 @@ func parseArgsForOSSDiff(args []string) (local, remote string, localStrPos, remo
 }
 
 func getLocalFileList(local string) (files []OSSFile, errs int) {
-	DoJobsConcurrently{
+	gotogether.Queue{
 		Concurrency: concurrency,
 		AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
 			*errs <- filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
@@ -171,7 +172,7 @@ func getLocalFileList(local string) (files []OSSFile, errs int) {
 			debug(*err)
 			errs++
 		},
-		DoJob: func(job *interface{}) (rets []interface{}) {
+		DoJob: func(job *interface{}) (_ interface{}, _ error) {
 			file := (*job).(OSSFile)
 			data, err := ioutil.ReadFile(file.Name)
 			if err != nil {
@@ -179,25 +180,22 @@ func getLocalFileList(local string) (files []OSSFile, errs int) {
 			} else {
 				file.ETag = fmt.Sprintf("\"%X\"", md5.Sum(data))
 			}
-			return []interface{}{&file}
-		},
-		OnJobDone: func(ret *[]interface{}) {
-			file := *(*ret)[0].(*OSSFile)
 			files = append(files, file)
+			return
 		},
-	}.Now()
+	}.Run()
 	return
 }
 
 func getDiff(localFiles, remoteFiles []OSSFile, localStrPos, remoteStrPos int, checkMD5 bool) (localOnly, remoteOnly []OSSFile) {
-	ParallelRun{
+	gotogether.Parallel{
 		func() {
 			localOnly = diff(localFiles, remoteFiles, localStrPos, remoteStrPos, checkMD5)
 		},
 		func() {
 			remoteOnly = diff(remoteFiles, localFiles, remoteStrPos, localStrPos, checkMD5)
 		},
-	}.Now()
+	}.Run()
 	return
 }
 

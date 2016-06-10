@@ -15,7 +15,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -34,78 +33,6 @@ func die(msg ...interface{}) {
 		fmt.Fprintln(os.Stderr, msg...)
 	}
 	os.Exit(1)
-}
-
-type ParallelRun []func()
-
-func (p ParallelRun) Now() {
-	var wg sync.WaitGroup
-	wg.Add(len(p))
-	for _, f := range p {
-		go func(f func()) {
-			f()
-			wg.Done()
-		}(f)
-	}
-	wg.Wait()
-}
-
-type DoJobsConcurrently struct {
-	Concurrency   int
-	AddJob        func(jobs *chan interface{}, done *chan interface{}, errs *chan error)
-	OnAddJobError func(err *error)
-	DoJob         func(job *interface{}) (ret []interface{})
-	OnJobDone     func(ret *[]interface{})
-}
-
-func (__ DoJobsConcurrently) Now() {
-	done := make(chan interface{})
-	defer close(done)
-
-	jobs := make(chan interface{})
-	errs := make(chan error)
-	go func() {
-		defer close(jobs)
-		defer close(errs)
-		__.AddJob(&jobs, &done, &errs)
-	}()
-
-	rets := make(chan []interface{})
-	var jobsWG sync.WaitGroup
-	jobsWG.Add(__.Concurrency)
-	for i := 0; i < __.Concurrency; i++ {
-		go func() {
-			defer jobsWG.Done()
-			for job := range jobs {
-				select {
-				case rets <- __.DoJob(&job):
-				case <-done:
-					return
-				}
-			}
-		}()
-	}
-	go func() {
-		jobsWG.Wait()
-		close(rets)
-	}()
-
-	ParallelRun{
-		func() {
-			for err := range errs {
-				if __.OnAddJobError != nil && err != nil {
-					__.OnAddJobError(&err)
-				}
-			}
-		},
-		func() {
-			for ret := range rets {
-				if __.OnJobDone != nil {
-					__.OnJobDone(&ret)
-				}
-			}
-		},
-	}.Now()
 }
 
 type Signature struct {

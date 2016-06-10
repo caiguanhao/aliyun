@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caiguanhao/gotogether"
 	"github.com/codegangsta/cli"
 )
 
@@ -63,7 +64,7 @@ var OSS_DOWNLOAD cli.Command = cli.Command{
 			return
 		}
 
-		DoJobsConcurrently{
+		gotogether.Queue{
 			Concurrency: concurrency,
 			AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
 				for index, remote := range remotes {
@@ -71,25 +72,18 @@ var OSS_DOWNLOAD cli.Command = cli.Command{
 					*jobs <- paths
 				}
 			},
-			DoJob: func(job *interface{}) []interface{} {
+			DoJob: func(job *interface{}) (_ interface{}, _ error) {
 				paths := (*job).([]string)
-				ret, err := remoteFileToLocalFile(paths[0], paths[1])
-				return []interface{}{*job, ret, err}
-			},
-			OnJobDone: func(ret *[]interface{}) {
-				paths := (*ret)[0].([]string)
-				downloaded := (*ret)[1].(int64)
-				if (*ret)[2] != nil {
-					err := (*ret)[2].(error)
-					if err != nil {
-						debug(paths[0]+":", err)
-						totalErrors++
-						return
-					}
+				size, err := remoteFileToLocalFile(paths[0], paths[1])
+				if err == nil {
+					stat.Add(size)
+				} else {
+					debug(paths[0], err)
+					totalErrors++
 				}
-				stat.Add(downloaded)
+				return
 			},
-		}.Now()
+		}.Run()
 	},
 }
 
