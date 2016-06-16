@@ -38,6 +38,7 @@ var OSS_UPLOAD cli.Command = cli.Command{
 				debug(*summary)
 			}
 			if totalErrors > 0 {
+				debugf("%d error(s) occurred during uploading.\n", totalErrors)
 				os.Exit(1)
 			} else {
 				os.Exit(0)

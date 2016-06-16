@@ -111,6 +111,13 @@ var OSS_DIFF cli.Command = cli.Command{
 					time.Since(timeStart).String(),
 				)
 			}
+		} else {
+			fmt.Fprintf(os.Stderr, "%d error(s):\n", totalErrors)
+			for _, f := range localFiles {
+				if f.err != nil {
+					fmt.Fprintln(os.Stderr, f.err)
+				}
+			}
 		}
 		os.Exit(retCode)
 	},
@@ -172,6 +179,7 @@ func getLocalFileList(local string) (files []OSSFile, errs int) {
 			data, err := ioutil.ReadFile(file.Name)
 			if err != nil {
 				file.err = err
+				errs++
 			} else {
 				file.ETag = fmt.Sprintf("\"%X\"", md5.Sum(data))
 			}

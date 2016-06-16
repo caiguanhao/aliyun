@@ -49,6 +49,7 @@ var OSS_DOWNLOAD cli.Command = cli.Command{
 				debug(*summary)
 			}
 			if totalErrors > 0 {
+				debugf("%d error(s) occurred during downloading.\n", totalErrors)
 				os.Exit(1)
 			} else {
 				os.Exit(0)
