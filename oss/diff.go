@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/md5"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -149,30 +148,26 @@ func parseArgsForOSSDiff(args []string) (local, remote string, localStrPos, remo
 func getLocalFileList(local string) (files []OSSFile, errs int) {
 	gotogether.Queue{
 		Concurrency: concurrency,
-		AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
-			*errs <- filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
+		AddJob: func(jobs *chan interface{}) {
+			err := filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
 				if !info.Mode().IsRegular() {
 					return nil
 				}
-				select {
-				case *jobs <- OSSFile{
+				*jobs <- OSSFile{
 					Name: path,
 					Size: info.Size(),
-				}:
-				case <-*done:
-					return errors.New("walk canceled")
 				}
 				return nil
 			})
+			if err != nil {
+				debug(err)
+				errs++
+			}
 		},
-		OnAddJobError: func(err *error) {
-			debug(*err)
-			errs++
-		},
-		DoJob: func(job *interface{}) (_ interface{}, _ error) {
+		DoJob: func(job *interface{}) {
 			file := (*job).(OSSFile)
 			data, err := ioutil.ReadFile(file.Name)
 			if err != nil {
@@ -181,7 +176,6 @@ func getLocalFileList(local string) (files []OSSFile, errs int) {
 				file.ETag = fmt.Sprintf("\"%X\"", md5.Sum(data))
 			}
 			files = append(files, file)
-			return
 		},
 	}.Run()
 	return

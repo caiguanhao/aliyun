@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -65,37 +64,34 @@ var OSS_UPLOAD cli.Command = cli.Command{
 
 		gotogether.Queue{
 			Concurrency: concurrency,
-			AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
+			AddJob: func(jobs *chan interface{}) {
 				localsMoreThanOne := len(locals) > 1
 				for _, local := range locals {
 					fi, err := os.Stat(local)
 					if err != nil {
-						*errs <- err
+						debug(err)
+						totalErrors++
 					} else if fi.Mode().IsRegular() {
 						*jobs <- []string{local, localPathToRemotePath(local, remote, localsMoreThanOne, parentsPath)}
 					} else {
-						*errs <- filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
+						err := filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
 							if err != nil {
 								return err
 							}
 							if !info.Mode().IsRegular() {
 								return nil
 							}
-							select {
-							case *jobs <- []string{path, localDirectoryToRemotePath(local, path, remote, parentsPath)}:
-							case <-*done:
-								return errors.New("walk canceled")
-							}
+							*jobs <- []string{path, localDirectoryToRemotePath(local, path, remote, parentsPath)}
 							return nil
 						})
+						if err != nil {
+							debug(err)
+							totalErrors++
+						}
 					}
 				}
 			},
-			OnAddJobError: func(err *error) {
-				debug(*err)
-				totalErrors++
-			},
-			DoJob: func(job *interface{}) (ret interface{}, _ error) {
+			DoJob: func(job *interface{}) {
 				paths := (*job).([]string)
 				if dryrun {
 					fmt.Println(paths[0], " -> ", paths[1])
@@ -108,7 +104,6 @@ var OSS_UPLOAD cli.Command = cli.Command{
 					debug(paths[0], err)
 					totalErrors++
 				}
-				return
 			},
 		}.Run()
 	},

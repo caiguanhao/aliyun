@@ -66,13 +66,13 @@ var OSS_DOWNLOAD cli.Command = cli.Command{
 
 		gotogether.Queue{
 			Concurrency: concurrency,
-			AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
+			AddJob: func(jobs *chan interface{}) {
 				for index, remote := range remotes {
 					paths := []string{remote, locals[index]}
 					*jobs <- paths
 				}
 			},
-			DoJob: func(job *interface{}) (_ interface{}, _ error) {
+			DoJob: func(job *interface{}) {
 				paths := (*job).([]string)
 				size, err := remoteFileToLocalFile(paths[0], paths[1])
 				if err == nil {
@@ -81,7 +81,6 @@ var OSS_DOWNLOAD cli.Command = cli.Command{
 					debug(paths[0], err)
 					totalErrors++
 				}
-				return
 			},
 		}.Run()
 	},

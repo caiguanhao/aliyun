@@ -54,6 +54,34 @@ func (e Enumerable) ParallelWithIndex(f func(item interface{}, i int)) (p Parall
 	return
 }
 
+// Convert Enumerable to Queue
+func (e Enumerable) Queue(f func(item interface{})) (q Queue) {
+	q.AddJob = func(jobs *chan interface{}) {
+		for _, item := range e {
+			*jobs <- item
+		}
+	}
+	q.DoJob = func(job *interface{}) {
+		f(*job)
+		return
+	}
+	return
+}
+
+func (e Enumerable) QueueWithIndex(f func(item interface{}, i int)) (q Queue) {
+	q.AddJob = func(jobs *chan interface{}) {
+		for i, item := range e {
+			*jobs <- []interface{}{item, i}
+		}
+	}
+	q.DoJob = func(job *interface{}) {
+		jobInfo := (*job).([]interface{})
+		f(jobInfo[0], jobInfo[1].(int))
+		return
+	}
+	return
+}
+
 // Array of functions to run concurrently.
 type Parallel []func()
 
@@ -76,22 +104,10 @@ type Queue struct {
 	Concurrency int
 
 	// required function to send job params that will be used in DoJob() to jobs channel, and error to errs channel
-	// if done channel is closed, AddJob() should be cancelled
-	AddJob func(jobs *chan interface{}, done *chan interface{}, errs *chan error)
-	// optional function to deal with errors from AddJob()
-	OnAddJobError func(err *error)
+	AddJob func(jobs *chan interface{})
 
 	// required function to process job with job params from AddJob() and return results and errors,
-	DoJob func(job *interface{}) (ret interface{}, err error)
-	// optional function to deal with errors from DoJob()
-	OnJobError func(err *error)
-	// optional function to deal with results from DoJob()
-	OnJobSuccess func(ret *interface{})
-}
-
-func (q Queue) doJob(job *interface{}) []interface{} {
-	ret, err := q.DoJob(job)
-	return []interface{}{ret, err}
+	DoJob func(job *interface{})
 }
 
 // Run immediately and wait until all jobs complete.
@@ -108,55 +124,27 @@ func (q Queue) Run() {
 		panic("DoJob() must not be nil")
 	}
 
-	done := make(chan interface{})
-	defer close(done)
-
 	jobs := make(chan interface{})
-	addJobErrs := make(chan error)
 	go func() {
 		defer close(jobs)
-		defer close(addJobErrs)
-		q.AddJob(&jobs, &done, &addJobErrs)
+		q.AddJob(&jobs)
 	}()
 
-	rets := make(chan []interface{})
-	var jobsWG sync.WaitGroup
-	jobsWG.Add(q.Concurrency)
+	var wg sync.WaitGroup
+	wg.Add(q.Concurrency)
 	for i := 0; i < q.Concurrency; i++ {
 		go func() {
-			defer jobsWG.Done()
+			defer wg.Done()
 			for job := range jobs {
-				select {
-				case rets <- q.doJob(&job):
-				case <-done:
-					return
-				}
+				q.DoJob(&job)
 			}
 		}()
 	}
-	go func() {
-		jobsWG.Wait()
-		close(rets)
-	}()
+	wg.Wait()
+}
 
-	Parallel{
-		func() {
-			for err := range addJobErrs {
-				if q.OnAddJobError != nil && err != nil {
-					q.OnAddJobError(&err)
-				}
-			}
-		},
-		func() {
-			for ret := range rets {
-				if err, errExists := ret[1].(error); errExists && err != nil {
-					if q.OnJobError != nil {
-						q.OnJobError(&err)
-					}
-				} else if q.OnJobSuccess != nil {
-					q.OnJobSuccess(&ret[0])
-				}
-			}
-		},
-	}.Run()
+// Set concurrency
+func (q Queue) WithConcurrency(concurrency int) Queue {
+	q.Concurrency = concurrency
+	return q
 }

@@ -20,15 +20,9 @@ gotogether.Parallel{
 
 gotogether.Queue{
 	Concurrency: 5,
-	AddJob: func(jobs *chan interface{}, done *chan interface{}, errs *chan error) {
+	AddJob: func(jobs *chan interface{}) {
 	},
-	OnAddJobError: func(err *error) {
-	},
-	DoJob: func(job *interface{}) (ret interface{}, err error) {
-	},
-	OnJobError: func(err *error) {
-	},
-	OnJobSuccess: func(ret *interface{}) {
+	DoJob: func(job *interface{}) {
 	},
 }.Run()
 ```
